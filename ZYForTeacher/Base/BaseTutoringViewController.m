@@ -21,10 +21,9 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    self.view.backgroundColor = [UIColor whiteColor];
     
-    [self.view addSubview:self.rootScrollView];
     [self.view addSubview:self.rightBtn];
-    [self.view addSubview:self.endBtn];
     
 }
 
@@ -43,7 +42,8 @@
 #pragma mark -- Event response
 #pragma mark 查看更多（取消辅导和消息）
 -(void)getMoreHandleListAction{
-    [YBPopupMenu showRelyOnView:self.rightBtn titles:@[@"取消辅导",@"消息"] icons:@[@"",@"",@""] menuWidth:100 otherSettings:^(YBPopupMenu *popupMenu) {
+    NSArray *titles = self.myOrder.type==0?@[@"取消检查",@"消息"]:@[@"取消辅导",@"消息"];
+    [YBPopupMenu showRelyOnView:self.rightBtn titles:titles icons:@[@"",@"",@""] menuWidth:100 otherSettings:^(YBPopupMenu *popupMenu) {
         popupMenu.priorityDirection = YBPopupMenuPriorityDirectionTop;
         popupMenu.borderWidth = 0.5;
         popupMenu.borderColor = [UIColor colorWithHexString:@"0xeeeeeee"];
@@ -59,15 +59,6 @@
 }
 
 #pragma mark -- Getters
-#pragma mark 根视图
--(UIScrollView *)rootScrollView{
-    if (!_rootScrollView) {
-        _rootScrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(0, 0, kScreenWidth, kScreenHeight)];
-        _rootScrollView.showsVerticalScrollIndicator = NO;
-    }
-    return _rootScrollView;
-}
-
 #pragma mark 更多
 -(UIButton *)rightBtn{
     if (!_rightBtn) {
@@ -79,18 +70,5 @@
 }
 
 
--(UIButton *)endBtn{
-    if (!_endBtn) {
-        _endBtn = [[UIButton alloc] initWithFrame:CGRectMake((kScreenWidth-60)/2, kScreenHeight-80, 60, 60)];
-        [_endBtn setTitle:@"结束" forState:UIControlStateNormal];
-        [_endBtn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-        _endBtn.backgroundColor = [UIColor whiteColor];
-        _endBtn.layer.cornerRadius = 30;
-        _endBtn.layer.borderColor = [UIColor blackColor].CGColor;
-        _endBtn.layer.borderWidth = 1;
-        [_endBtn addTarget:self action:@selector(endHomeworkCheckAction) forControlEvents:UIControlEventTouchUpInside];
-    }
-    return _endBtn;
-}
 
 @end

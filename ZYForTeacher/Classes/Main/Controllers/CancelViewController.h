@@ -10,4 +10,6 @@
 
 @interface CancelViewController : BaseViewController
 
+@property (nonatomic,assign) BOOL isTutorial;
+
 @end

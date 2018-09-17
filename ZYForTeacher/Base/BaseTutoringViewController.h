@@ -7,10 +7,10 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "OrderModel.h"
 
 @interface BaseTutoringViewController : UIViewController
 
-@property (nonatomic, strong ) UIScrollView  *rootScrollView;
-@property (nonatomic, strong ) UIButton      *endBtn;
+@property (nonatomic ,strong) OrderModel *myOrder;
 
 @end

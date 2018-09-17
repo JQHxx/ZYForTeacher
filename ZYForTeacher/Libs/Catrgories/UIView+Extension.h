@@ -8,6 +8,14 @@
 
 #import <UIKit/UIKit.h>
 
+typedef enum : NSUInteger {
+    BoderRadiusTypeAll,
+    BoderRadiusTypeTop,
+    BoderRadiusTypeBottom,
+    BoderRadiusTypeLeft,
+    BoderRadiusTypeRight,
+} BoderRadiusType;
+
 @interface UIView (Extension)
 
 @property (nonatomic, assign) CGFloat x;
@@ -24,6 +32,12 @@
 
 @property (nonatomic, assign) CGFloat bottom;
 @property (nonatomic, assign) CGFloat right;
+
+@property (nonatomic, assign) CGFloat boderRadius;  //圆角
+@property (nonatomic, assign) CGFloat topBoderRadius;  //顶部圆角
+@property (nonatomic, assign) CGFloat rightBoderRadius;  //右侧圆角
+
+-(void)drawBorderRadisuWithType:(BoderRadiusType)type boderRadius:(CGFloat)boderRadius;
 
 
 @end

@@ -26,13 +26,14 @@
 #define kScreenHeight     [UIScreen mainScreen].bounds.size.height
 #define kScreenWidth      [UIScreen mainScreen].bounds.size.width
 #define kTabHeight        (isIPhoneX ? (49+ 34) : 49)
-#define kNavHeight        (isIPhoneX ? 88 : 64)
+#define kNavHeight        (isIPhoneX ? 88 : 64)+6
 #define KStatusHeight     (isIPhoneX ? 44 : 20)
 
 
 //颜色
 #define kRGBColor(r, g, b)    [UIColor colorWithRed:(r)/255.0  green:(g)/255.0 blue:(b)/255.0  alpha:1]
-#define kSystemColor          [UIColor colorWithHexString:@"#05d380"]
+//#define kSystemColor          [UIColor colorWithHexString:@"#05d380"]
+#define kSystemColor          [UIColor whiteColor]
 #define kbgView               [UIColor colorWithHexString:@"#f0f0f0"]
 #define kBackgroundColor      kRGBColor(238,241,241)  // 灰色主题背景色
 #define kLineColor            kRGBColor(200, 199, 204)
@@ -72,5 +73,6 @@
 #import "UIImage+Extend.h"
 #import "UIColor+Extend.h"
 #import "NSString+Extend.h"
+#import "UIFont+FontName.h"
 #import "ZYHelper.h"
 #import "Interface.h"

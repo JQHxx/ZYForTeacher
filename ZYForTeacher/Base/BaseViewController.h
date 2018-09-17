@@ -20,10 +20,18 @@ typedef void(^BaseReturnBackBlock)(id object);
 @property (nonatomic ,copy)NSString    *rightImageName;      //导航栏右侧图片名称
 @property (nonatomic ,copy)NSString    *rigthTitleName;      //导航栏右侧标题名称
 
+@property (nonatomic ,strong)UIButton   *rightBtn;
+@property (nonatomic ,assign)BOOL       isRightBtnEnable;
+@property (nonatomic ,assign)BOOL       isHiddenShaw;   //隐藏导航栏阴影
+
 @property (nonatomic, copy)BaseReturnBackBlock backBlock;
+
+@property (nonatomic ,strong)UIImagePickerController *imgPicker;
 
 
 -(void)leftNavigationItemAction;
 -(void)rightNavigationItemAction;
+
+-(void)addPhoto;
 
 @end

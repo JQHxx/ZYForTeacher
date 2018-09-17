@@ -154,5 +154,23 @@
     self.frame = newframe;
 }
 
+-(void)drawBorderRadisuWithType:(BoderRadiusType)type boderRadius:(CGFloat)boderRadius{
+    UIRectCorner corner;
+    if (type == BoderRadiusTypeAll) {
+        corner = UIRectCornerTopLeft| UIRectCornerTopRight | UIRectCornerBottomLeft | UIRectCornerBottomRight;
+    }else if (type == BoderRadiusTypeTop){
+        corner = UIRectCornerTopLeft| UIRectCornerTopRight;
+    }else if (type == BoderRadiusTypeLeft){
+        corner = UIRectCornerTopLeft | UIRectCornerBottomLeft;
+    }else if (type == BoderRadiusTypeRight){
+        corner = UIRectCornerTopRight | UIRectCornerBottomRight;
+    }
+    UIBezierPath *maskPath = [UIBezierPath bezierPathWithRoundedRect:self.bounds byRoundingCorners:corner  cornerRadii:CGSizeMake(boderRadius, boderRadius)];
+    CAShapeLayer *maskLayer = [[CAShapeLayer alloc] init];
+    maskLayer.frame = self.bounds;
+    maskLayer.path = maskPath.CGPath;
+    self.layer.mask = maskLayer;
+}
+
 
 @end

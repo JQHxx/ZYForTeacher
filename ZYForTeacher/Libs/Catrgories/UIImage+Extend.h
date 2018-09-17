@@ -75,7 +75,6 @@
 */
 -(UIImage *)imageCompressForSize:(UIImage *)sourceImage targetSize:(CGSize)size;
 
-
 /*
  * 图片绘制圆角
  */

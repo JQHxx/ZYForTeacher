@@ -13,23 +13,14 @@
 -(instancetype)initWithFrame:(CGRect)frame title:(NSString *)title{
     self = [super initWithFrame:frame];
     if (self) {
-        self.layer.cornerRadius =20;
+        [self setBackgroundImage:[UIImage imageNamed:@"login_bg_btn"] forState:UIControlStateNormal];
         [self setTitle:title forState:UIControlStateNormal];
-        [self setTitleColor:[UIColor colorWithHexString:@"#ffffff"] forState:UIControlStateNormal];
-        self.titleLabel.font = [UIFont systemFontOfSize:18];
-        
+        [self setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        self.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:16];
     }
     return self;
 }
 
--(void)setClickable:(BOOL)clickable{
-    if (clickable) {
-        self.userInteractionEnabled =YES;
-        self.backgroundColor = [UIColor redColor];
-    }else{
-        self.userInteractionEnabled =NO;
-        self.backgroundColor = kRGBColor(240, 174, 151);
-    }
-}
+
 
 @end

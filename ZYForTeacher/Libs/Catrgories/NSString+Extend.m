@@ -17,10 +17,8 @@
     unsigned char result[CC_MD5_DIGEST_LENGTH];
     CC_MD5(original_str, (CC_LONG)strlen(original_str), result);
     NSMutableString *hash = [NSMutableString string];
-    
     for (int i = 0; i < CC_MD5_DIGEST_LENGTH; i++)
         [hash appendFormat:@"%02x", result[i]];
-    
     return [hash lowercaseString];
 }
 
@@ -30,7 +28,6 @@
     [scanner scanHexLongLong:&longlongValue];
     //将整数转换为NSNumber,存储到数组中,并返回.
     return [NSString stringWithFormat:@"%llu",longlongValue];
-    
 }
 
 #pragma mark --URLencode

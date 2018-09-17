@@ -10,7 +10,7 @@
 
 @interface CustomTextView : UIView
 
--(instancetype)initWithFrame:(CGRect)frame placeholder:(NSString *)placeholder icon:(NSString *)icon;
+-(instancetype)initWithFrame:(CGRect)frame placeholder:(NSString *)placeholder icon:(NSString *)icon isNumber:(BOOL)isNumber;
 
 @property (nonatomic ,strong) UITextField *myText;
 

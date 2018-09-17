@@ -28,6 +28,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.baseTitle = @"消息";
+    self.view.backgroundColor = [UIColor bgColor_Gray];
     
     systemNewsModel = [[SystemNewsModel alloc] init];
     
@@ -105,6 +106,7 @@
 #pragma mark 加载数据
 -(void)loadMessageData{
     systemNewsModel.isRead = NO;
+    systemNewsModel.unreadCount = 28;
     systemNewsModel.title = @"充值活动满100送10";
     systemNewsModel.send_time = @"今天 16:00";
     
@@ -115,7 +117,7 @@
     for (NSInteger i=0; i<teachers.count; i++) {
         ConversationModel *model = [[ConversationModel alloc] init];
         model.lastMsgUserName = teachers[i];
-        model.lastMsgHeadPic = @"ic_m_head";
+        model.lastMsgHeadPic = @"photo";
         model.lastMsgTime = timesArr[i];
         model.lastMsg = msgArr[i];
         model.unreadCount = i*35+2;
@@ -128,7 +130,7 @@
 #pragma mark -- 消息列表视图
 -(UITableView *)messagesTableView{
     if (!_messagesTableView) {
-        _messagesTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, kNavHeight, kScreenWidth, kScreenHeight-kNavHeight) style:UITableViewStylePlain];
+        _messagesTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, kNavHeight+3.0, kScreenWidth, kScreenHeight-kNavHeight) style:UITableViewStylePlain];
         _messagesTableView.dataSource = self;
         _messagesTableView.delegate = self;
         _messagesTableView.tableFooterView = [[UIView alloc] init];

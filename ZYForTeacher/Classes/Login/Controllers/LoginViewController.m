@@ -8,23 +8,22 @@
 
 #import "LoginViewController.h"
 #import "RegisterViewController.h"
+#import "AppDelegate+Extension.h"
 #import "UserAgreementViewController.h"
-#import "MainViewController.h"
-#import "BaseNavigationController.h"
+#import "GetCodeViewController.h"
 #import "AppDelegate.h"
-
-#import "NumberTextView.h"
 #import "CustomTextView.h"
-#import "LoginButton.h"
 #import "UserAgreementView.h"
 
 
 @interface LoginViewController ()<UITextFieldDelegate>
 
-@property (nonatomic, strong) NumberTextView     *phoneTextView;       //手机号
+@property (nonatomic, strong) CustomTextView     *phoneTextView;       //手机号
 @property (nonatomic, strong) CustomTextView     *passwordTextView;    //密码
-@property (nonatomic, strong) LoginButton        *loginButton;         //登录
+@property (nonatomic, strong) UIButton           *visibleButton;       //密码可见或不可见
 @property (nonatomic, strong) UserAgreementView  *agreementView;       //用户协议
+@property (nonatomic, strong) UIButton           *selButton;
+@property (nonatomic, strong) UIButton           *loginButton;         //登录
 
 @end
 
@@ -38,14 +37,39 @@
     [self initLoginView];
 }
 
+#pragma mark 状态栏
+-(UIStatusBarStyle)preferredStatusBarStyle{
+    return UIStatusBarStyleLightContent;
+}
 
 #pragma mark -- Event reponse
+#pragma mark 设置密码是否可见
+-(void)setPasswordVisibleAction:(UIButton *)sender{
+    sender.selected = !sender.selected;
+    self.passwordTextView.myText.secureTextEntry=!sender.selected;
+}
+
 #pragma mark 登录
 -(void)loginAction{
+    if (kIsEmptyString(self.phoneTextView.myText.text)) {
+        [self.view makeToast:@"手机号不能为空" duration:1.0 position:CSToastPositionCenter];
+        return;
+    }
+    
+    BOOL isPhoneNumber = [self.phoneTextView.myText.text isPhoneNumber];
+    if (!isPhoneNumber) {
+        [self.view makeToast:@"您输入的手机号码有误,请重新输入" duration:1.0 position:CSToastPositionCenter];
+        return;
+    }
+    
+    if (self.passwordTextView.myText.text.length<6) {
+        [self.view makeToast:@"密码不能少于6位" duration:1.0 position:CSToastPositionCenter];
+        return;
+    }
+    
+    
     AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-    MainViewController *mainVC = [[MainViewController alloc] init];
-    BaseNavigationController *nav = [[BaseNavigationController alloc] initWithRootViewController:mainVC];
-    appDelegate.window.rootViewController = nav;
+    [appDelegate setMyRootViewController];
 }
 
 #pragma mark 去注册
@@ -54,23 +78,21 @@
         RegisterViewController *registerVC = [[RegisterViewController alloc] init];
         [self.navigationController pushViewController:registerVC animated:YES];
     }else{  //忘记密码
-        
+        GetCodeViewController *getCodeVC = [[GetCodeViewController alloc] init];
+        [self.navigationController pushViewController:getCodeVC animated:YES];
     }
 }
 
-#pragma mark 查看用户协议
--(void)viewUserAgreement{
+#pragma mark 是否已阅读
+-(void)chooseForDidReadUserAgreement:(UIButton *)sender{
+    sender.selected = !sender.selected;
     
-}
-
-#pragma mark 监听输入变化
--(void)textFieldDidChange:(UITextField *)textField{
-    if(textField == self.phoneTextView.myText || textField == self.passwordTextView.myText){
-        if (self.phoneTextView.myText.text.length>=11&&self.passwordTextView.myText.text.length>=6) {
-            self.loginButton.clickable = YES;
-        }else{
-            self.loginButton.clickable = NO;
-        }
+    if(sender.selected){
+        [self.loginButton setImage:[UIImage imageNamed:@"button_login"] forState:UIControlStateNormal];
+        self.loginButton.userInteractionEnabled = YES;
+    }else{
+        [self.loginButton setImage:[UIImage imageNamed:@"button_login_gray"] forState:UIControlStateNormal];
+        self.loginButton.userInteractionEnabled = NO;
     }
 }
 
@@ -97,45 +119,46 @@
             return YES;
         }
     }
+    
     return NO;
 }
 
 #pragma mark -- Pravite Methods
 #pragma mark 初始化界面
 -(void)initLoginView{
-    UIImageView *imgView=[[UIImageView alloc] initWithFrame:CGRectMake((kScreenWidth-90)/2, 84, 90, 90)];
-    imgView.image=[UIImage imageNamed:@"ic_tangshi_logo"];
+    UIImageView *imgView=[[UIImageView alloc] initWithFrame:self.view.bounds];
+    imgView.image = [UIImage imageNamed:@"login_background"];
     [self.view addSubview:imgView];
     
     [self.view addSubview:self.phoneTextView];
     [self.view addSubview:self.passwordTextView];
+    [self.view addSubview:self.visibleButton];
+    [self.view addSubview:self.agreementView];
+    [self.view addSubview:self.selButton];
     [self.view addSubview:self.loginButton];
     
     NSArray *btnTitles = @[@"立即注册",@"忘记密码"];
     for (NSInteger i=0; i<btnTitles.count; i++) {
         UIButton *btn = [[UIButton alloc] initWithFrame:CGRectMake(kScreenWidth/2-100+120*i,self.loginButton.bottom + 24, 80, 20)];
         [btn setTitle:btnTitles[i] forState:UIControlStateNormal];
-        btn.titleLabel.font = kFontWithSize(15);
+        btn.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:14];
         btn.tag = i+100;
-        [btn setTitleColor:i==0?[UIColor redColor]:[UIColor lightGrayColor] forState:UIControlStateNormal];
+        [btn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         [btn addTarget:self action:@selector(btnClickAction:) forControlEvents:UIControlEventTouchUpInside];
         [self.view addSubview:btn];
     }
     
     UILabel *line = [[UILabel alloc] initWithFrame:CGRectMake(kScreenWidth/2, self.loginButton.bottom+24, 1, 20)];
-    line.backgroundColor = kLineColor;
+    line.backgroundColor = [UIColor whiteColor];
     [self.view addSubview:line];
-    
-    [self.view addSubview:self.agreementView];
 }
 
 #pragma mark -- Getters
 #pragma mark 手机号
--(NumberTextView *)phoneTextView{
+-(CustomTextView *)phoneTextView{
     if (!_phoneTextView) {
-        _phoneTextView = [[NumberTextView alloc] initWithFrame:CGRectMake(20, 150, kScreenWidth-40, 55) placeholder:@"请输入手机号码" icon:@"ic_login_num"];
+        _phoneTextView = [[CustomTextView alloc] initWithFrame:CGRectMake(48, 290, kScreenWidth-95, 42) placeholder:@"请输入手机号码" icon:@"login_phone" isNumber:YES];
         _phoneTextView.myText.delegate = self;
-        [_phoneTextView.myText addTarget:self action:@selector(textFieldDidChange:) forControlEvents:UIControlEventEditingChanged];
     }
     return _phoneTextView;
 }
@@ -143,31 +166,43 @@
 #pragma mark 密码
 -(CustomTextView *)passwordTextView{
     if (!_passwordTextView) {
-        _passwordTextView = [[CustomTextView alloc] initWithFrame:CGRectMake(20, self.phoneTextView.bottom+15, kScreenWidth - 40, 55) placeholder:@"请输入密码" icon:@"ic_login_code" ];
+        _passwordTextView = [[CustomTextView alloc] initWithFrame:CGRectMake(48, self.phoneTextView.bottom+37, kScreenWidth - 95, 42) placeholder:@"请输入密码" icon:@"login_password"  isNumber:NO];
         _passwordTextView.myText.delegate = self;
         _passwordTextView.myText.keyboardType = UIKeyboardTypeASCIICapable;
         _passwordTextView.myText.secureTextEntry = YES;
-        [_passwordTextView.myText addTarget:self action:@selector(textFieldDidChange:) forControlEvents:UIControlEventEditingChanged];
     }
     return _passwordTextView;
 }
 
-#pragma mark 登录
--(LoginButton *)loginButton{
-    if (!_loginButton) {
-        _loginButton = [[LoginButton alloc] initWithFrame:CGRectMake(20, self.passwordTextView.bottom+30, kScreenWidth-40, 45) title:@"登录"];
-        [_loginButton addTarget:self action:@selector(loginAction) forControlEvents:UIControlEventTouchUpInside];
-        _loginButton.clickable = NO;
+#pragma mark 设置可见
+-(UIButton *)visibleButton{
+    if (!_visibleButton) {
+        _visibleButton = [[UIButton alloc] initWithFrame:CGRectMake(kScreenWidth-82,self.passwordTextView.top+13, 27, 16)];
+        [_visibleButton setImage:[UIImage imageNamed:@"login_password_hide"] forState:UIControlStateNormal];
+        [_visibleButton setImage:[UIImage imageNamed:@"login_password_show"] forState:UIControlStateSelected];
+        [_visibleButton addTarget:self action:@selector(setPasswordVisibleAction:) forControlEvents:UIControlEventTouchUpInside];
     }
-    return _loginButton;
+    return _visibleButton;
+}
+
+#pragma mark 选择是否同意
+-(UIButton *)selButton{
+    if (!_selButton) {
+        _selButton = [[UIButton alloc] initWithFrame:CGRectMake(79.0, self.passwordTextView.bottom+40.0, 16, 16)];
+        [_selButton setImage:[UIImage imageNamed:@"login_agreement"] forState:UIControlStateNormal];
+        [_selButton setImage:[UIImage imageNamed:@"login_agreement_agree"] forState:UIControlStateSelected];
+        [_selButton addTarget:self action:@selector(chooseForDidReadUserAgreement:) forControlEvents:UIControlEventTouchUpInside];
+        _selButton.selected = YES;
+    }
+    return _selButton;
 }
 
 #pragma mark 用户协议
 -(UserAgreementView *)agreementView{
     if (!_agreementView) {
-        NSString * tempStr = @"点击登录，即表示您同意《作业101用户协议》";
+        NSString * tempStr = @"我已阅读并同意《作业101用户协议》";
         CGFloat labW = [tempStr boundingRectWithSize:CGSizeMake(kScreenWidth, 20) withTextFont:kFontWithSize(12)].width;
-        _agreementView = [[UserAgreementView alloc] initWithFrame:CGRectMake((kScreenWidth-labW)/2, kScreenHeight-40, labW, 20) string:tempStr];
+        _agreementView = [[UserAgreementView alloc] initWithFrame:CGRectMake(self.selButton.right+5,self.passwordTextView.bottom +38, labW+40, 20) string:tempStr];
         kSelfWeak;
         _agreementView.clickAction = ^{
             UserAgreementViewController *userAgreementVC = [[UserAgreementViewController alloc] init];
@@ -175,6 +210,16 @@
         };
     }
     return _agreementView;
+}
+
+#pragma mark 登录
+-(UIButton *)loginButton{
+    if (!_loginButton) {
+        _loginButton = [[UIButton alloc] initWithFrame:CGRectMake(48, self.agreementView.bottom+13, kScreenWidth-95.0, (kScreenWidth-95.0)*(128.0/588.0))];
+        [_loginButton setImage:[UIImage imageNamed:@"button_login"] forState:UIControlStateNormal];
+        [_loginButton addTarget:self action:@selector(loginAction) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _loginButton;
 }
 
 

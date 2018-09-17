@@ -14,10 +14,6 @@ singleton_interface(ZYHelper)
 
 @property (nonatomic ,assign) BOOL isLogin;
 
-@property (nonatomic ,strong) NSArray *daysArray;
-@property (nonatomic ,strong) NSArray *hoursArray;       //小时
-@property (nonatomic ,strong) NSArray *minutesArray;     //分钟
-
 /*
  *根据年级获取科目
  *
@@ -25,7 +21,7 @@ singleton_interface(ZYHelper)
  * @return 科目数组
  *
  */
--(NSArray *)getCourseForGrade:(NSString *)grade;
+-(NSArray *)getCourseForStage:(NSString *)stage;
 
 /*
  *获取订单状态
@@ -35,6 +31,21 @@ singleton_interface(ZYHelper)
  *
  */
 -(NSString *)getStateStringWithIndex:(NSInteger)index;
+
+/***
+ * @bref  限制emoji表情输入
+ */
+-(BOOL)strIsContainEmojiWithStr:(NSString*)str;
+
+/***
+ * @bref  限制第三方键盘（常用的是搜狗键盘）的表情
+ */
+- (BOOL)hasEmoji:(NSString*)string;
+
+/***
+ * @bref  判断当前是不是在使用九宫格输入
+ */
+-(BOOL)isNineKeyBoard:(NSString *)string;
 
 
 @end

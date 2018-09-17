@@ -13,30 +13,11 @@
 
 singleton_implementation(ZYHelper)
 
-#pragma mark 天
--(NSArray *)daysArray{
-    return @[@"今天", @"明天"];
-}
-
-#pragma mark 小时
--(NSArray *)hoursArray{
-    return @[@"0点", @"1点", @"2点", @"3点", @"4点", @"5点", @"6点", @"7点", @"8点", @"9点", @"10点", @"11点", @"12点", @"13点", @"14点", @"15点", @"16点", @"17点", @"18点", @"19点", @"20点", @"21点", @"22点", @"23点"];
-}
-
-#pragma mark 分钟
--(NSArray *)minutesArray{
-    return @[@"0分", @"10分", @"20分", @"30分", @"40分", @"50分"];
-}
-
 #pragma mark 根据年级获取科目
--(NSArray *)getCourseForGrade:(NSString *)grade{
+-(NSArray *)getCourseForStage:(NSString *)stage{
     NSArray *arr =nil;
-    if ([grade isEqualToString:@"初一"]) {
-        arr = @[@"语文",@"数学",@"英语",@"政治",@"历史",@"地理",@"生物"];
-    }else if ([grade isEqualToString:@"初二"]){
-        arr = @[@"语文",@"数学",@"英语",@"政治",@"历史",@"地理",@"化学",@"生物"];
-    }else if ([grade isEqualToString:@"初三"]){
-        arr = @[@"语文",@"数学",@"英语",@"政治",@"历史",@"地理",@"物理",@"化学",@"生物"];
+    if ([stage isEqualToString:@"初中"]) {
+        arr = @[@"语文",@"数学",@"英语",@"物理",@"化学",@"生物",@"历史",@"地理",@"道德与法治"];
     }else{
         arr = @[@"语文",@"数学",@"英语"];
     }
@@ -61,6 +42,74 @@ singleton_implementation(ZYHelper)
         state = @"已取消";
     }
     return state;
+}
+
+#pragma mark -- 限制emoji表情输入
+-(BOOL)strIsContainEmojiWithStr:(NSString*)str{
+    __block BOOL returnValue =NO;
+    [str enumerateSubstringsInRange:NSMakeRange(0, [str length]) options:NSStringEnumerationByComposedCharacterSequences usingBlock:
+     ^(NSString *substring, NSRange substringRange, NSRange enclosingRange, BOOL *stop){
+         const unichar hs = [substring characterAtIndex:0];
+         if(0xd800<= hs && hs <=0xdbff){
+             if(substring.length>1){
+                 const unichar ls = [substring characterAtIndex:1];
+                 const int uc = ((hs -0xd800) *0x400) + (ls -0xdc00) +0x10000;
+                 if(0x1d000<= uc && uc <=0x1f77f){
+                     returnValue =YES;
+                 }
+             }
+         }
+         else if(substring.length>1){
+             const unichar ls = [substring characterAtIndex:1];
+             if(ls ==0x20e3)
+             {
+                 returnValue =YES;
+             }
+         }else{
+             // non surrogate
+             if(0x2100<= hs && hs <=0x27ff&& hs !=0x263b)
+             {
+                 returnValue =YES;
+             }
+             else if(0x2B05<= hs && hs <=0x2b07)
+             {
+                 returnValue =YES;
+             }
+             else if(0x2934<= hs && hs <=0x2935)
+             {
+                 returnValue =YES;
+             }
+             else if(0x3297<= hs && hs <=0x3299)
+             {
+                 returnValue =YES;
+             }
+             else if(hs ==0xa9|| hs ==0xae|| hs ==0x303d|| hs ==0x3030|| hs ==0x2b55|| hs ==0x2b1c|| hs ==0x2b1b|| hs ==0x2b50|| hs ==0x231a)
+             {
+                 returnValue =YES;
+             }
+         }
+     }];
+    return returnValue;
+}
+#pragma mark -- 限制第三方键盘（常用的是搜狗键盘）的表情
+- (BOOL)hasEmoji:(NSString*)string;
+{
+    NSString *pattern = @"[^\\u0020-\\u007E\\u00A0-\\u00BE\\u2E80-\\uA4CF\\uF900-\\uFAFF\\uFE30-\\uFE4F\\uFF00-\\uFFEF\\u0080-\\u009F\\u2000-\\u201f\r\n]";
+    NSPredicate *pred = [NSPredicate predicateWithFormat:@"SELF MATCHES %@", pattern];
+    BOOL isMatch = [pred evaluateWithObject:string];
+    return isMatch;
+}
+#pragma mark -- 判断当前是不是在使用九宫格输入
+-(BOOL)isNineKeyBoard:(NSString *)string
+{
+    NSString *other = @"➋➌➍➎➏➐➑➒";
+    int len = (int)string.length;
+    for(int i=0;i<len;i++)
+    {
+        if(!([other rangeOfString:string].location != NSNotFound))
+            return NO;
+    }
+    return YES;
 }
 
 
