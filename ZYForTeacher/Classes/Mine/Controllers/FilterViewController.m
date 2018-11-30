@@ -16,7 +16,6 @@
 
 @interface FilterViewController (){
     NSArray   *typesArray;
-    NSString  *typeStr;
 }
 
 @property (nonatomic, strong) UILabel      *titleLabel;              //标题
@@ -42,12 +41,8 @@
     self.isHiddenNavBar = YES;
     
     typesArray = @[@"全部",@"作业检查",@"作业辅导",@"提现"];
-    typeStr = @"全部";
     
-    [self.view addSubview:self.titleLabel];
-    [self.view addSubview:self.cancelButton];
-    [self.view addSubview:self.typeLabelsView];
-    [self.view addSubview:self.confirmButton];
+    [self initFilterView];
     
 }
 
@@ -61,12 +56,26 @@
 
 #pragma mark 确定选择交易类型
 -(void)confirmSelectedTransactionTypeAction:(UIButton *)sender{
-    MyLog(@"type：%@",typeStr);
+    MyLog(@"type：%ld",self.transactionType);
     if (self.popupController) {
         [self.popupController dismissWithCompletion:^{
-            self.backBlock(typeStr);
+            self.backBlock([NSNumber numberWithInteger:self.transactionType]);
         }];
     }
+}
+
+#pragma mark -- Private Methods
+#pragma mark 初始化
+-(void)initFilterView{
+    [self.view addSubview:self.titleLabel];
+    [self.view addSubview:self.cancelButton];
+    
+    UILabel *line = [[UILabel alloc] initWithFrame:CGRectMake(0, 45, kScreenWidth, 0.5)];
+    line.backgroundColor = [UIColor colorWithHexString:@"#D8D8D8"];
+    [self.view addSubview:line];
+    
+    [self.view addSubview:self.typeLabelsView];
+    [self.view addSubview:self.confirmButton];
 }
 
 
@@ -74,8 +83,8 @@
 #pragma mark 标题
 -(UILabel *)titleLabel{
     if (!_titleLabel) {
-        _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(80, 10, kScreenWidth-160, 25)];
-        _titleLabel.font = kFontWithSize(18);
+        _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(80, 12, kScreenWidth-160, 22)];
+        _titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:16];
         _titleLabel.text = @"交易类型";
         _titleLabel.textAlignment = NSTextAlignmentCenter;
     }
@@ -85,10 +94,10 @@
 #pragma mark 关闭
 -(UIButton *)cancelButton{
     if(!_cancelButton){
-        _cancelButton = [[UIButton alloc] initWithFrame:CGRectMake(10, 5, 30,30)];
+        _cancelButton = [[UIButton alloc] initWithFrame:CGRectMake(16, 12, 32,22)];
         [_cancelButton setTitle:@"取消" forState:UIControlStateNormal];
-        [_cancelButton setTitleColor:[UIColor lightGrayColor] forState:UIControlStateNormal];
-        _cancelButton.titleLabel.font = kFontWithSize(14);
+        [_cancelButton setTitleColor:[UIColor colorWithHexString:@"#4A4A4A"] forState:UIControlStateNormal];
+        _cancelButton.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
         [_cancelButton addTarget:self action:@selector(closeTansactionViewAction:) forControlEvents:UIControlEventTouchUpInside];
     }
     return _cancelButton;
@@ -98,15 +107,16 @@
 -(LabelsView *)typeLabelsView{
     if (!_typeLabelsView) {
         _typeLabelsView = [[LabelsView alloc] initWithFrame:CGRectZero];
+        _typeLabelsView.selectedIndex = self.transactionType==4?0:self.transactionType;
         _typeLabelsView.labelsArray = [NSMutableArray arrayWithArray:typesArray];
         
         kSelfWeak;
         __weak typeof(_typeLabelsView) weakLabelsView = _typeLabelsView;
         _typeLabelsView.viewHeightRecalc = ^(CGFloat height) {
-            weakLabelsView.frame = CGRectMake(10, weakSelf.titleLabel.bottom+20, kScreenWidth-20, height);
+            weakLabelsView.frame = CGRectMake(0, weakSelf.titleLabel.bottom+33, kScreenWidth, height);
         };
         _typeLabelsView.didClickItem = ^(NSInteger itemIndex) {
-            typeStr = typesArray[itemIndex];
+            weakSelf.transactionType = itemIndex==0?4:itemIndex;
         };
     }
     return _typeLabelsView;
@@ -115,11 +125,10 @@
 #pragma mark 确定
 -(UIButton *)confirmButton{
     if (!_confirmButton) {
-        _confirmButton = [[UIButton alloc] initWithFrame:CGRectMake(20, kMyHeight-50, kScreenWidth-40, 40)];
-        _confirmButton.layer.cornerRadius = 5;
+        _confirmButton = [[UIButton alloc] initWithFrame:CGRectMake(43, kMyHeight-(kScreenWidth-95)*(128.0/588.0)-20, kScreenWidth-95,(kScreenWidth-95)*(128.0/588.0))];
         [_confirmButton setTitle:@"确定" forState:UIControlStateNormal];
         [_confirmButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        _confirmButton.backgroundColor = [UIColor redColor];
+        [_confirmButton setBackgroundImage:[UIImage imageNamed:@"login_bg_btn"] forState:UIControlStateNormal];
         [_confirmButton addTarget:self action:@selector(confirmSelectedTransactionTypeAction:) forControlEvents:UIControlEventTouchUpInside];
     }
     return _confirmButton;

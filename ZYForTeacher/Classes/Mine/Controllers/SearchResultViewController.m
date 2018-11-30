@@ -9,7 +9,9 @@
 #import "SearchResultViewController.h"
 #import "PinYin4Objc.h"
 
-@interface SearchResultViewController ()
+@interface SearchResultViewController (){
+    NSArray   *colleges;
+}
 
 @property(nonatomic, strong )NSMutableArray *schoolsArray;  //搜索结果
 
@@ -66,9 +68,19 @@
 -(void)setSearchText:(NSString *)searchText{
     _searchText = searchText;
     
-    NSArray *schools = @[@"长沙理工",@"长沙学院",@"长沙医学院",@"长沙职工大学",@"长沙教育学院"];
-    self.schoolsArray = [NSMutableArray arrayWithArray:schools];
-    [self.tableView reloadData];
+    
+    NSString *body = [NSString stringWithFormat:@"words=%@&token=%@",searchText,kUserTokenValue];
+    [TCHttpRequest postMethodWithURL:kSearchCollegeAPI body:body success:^(id json) {
+        NSArray *data = [json objectForKey:@"data"];
+        NSMutableArray * tempArr = [[NSMutableArray alloc] init];
+        for (NSDictionary *dict in data) {
+            [tempArr addObject:dict[@"college"]];
+        }
+        self.schoolsArray = tempArr;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.tableView reloadData];
+        });
+    }];
 }
 
 @end

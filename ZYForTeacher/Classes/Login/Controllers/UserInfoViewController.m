@@ -15,16 +15,17 @@
 #import "MainViewController.h"
 #import "BaseNavigationController.h"
 #import "IntroductionViewController.h"
-#import "AppDelegate+Extension.h"
+#import "AppDelegate.h"
 #import "LoginButton.h"
+#import <NIMSDK/NIMSDK.h>
 
-@interface UserInfoViewController ()<UITableViewDelegate,UITableViewDataSource,UITextFieldDelegate>{
+@interface UserInfoViewController ()<UITableViewDelegate,UITableViewDataSource,UITextFieldDelegate,NIMUserManagerDelegate>{
+    UIImage     *selImage;
     NSArray     *titlesArr;
 }
 @property (nonatomic, strong) UILabel            *titleLabel;     //标题
 @property (nonatomic ,strong) UITableView        *userInfoTableView;
 @property (nonatomic, strong) LoginButton        *completeButton;       //确定
-@property (nonatomic ,strong) UserModel          *userInfo;
 
 
 @end
@@ -38,9 +39,13 @@
     
     titlesArr = @[@"昵称",@"性别",@"出生日期",@"所在地区",@"个人介绍"];
     
+    [[NIMSDK sharedSDK].userManager addDelegate:self];
+    
     [self.view addSubview:self.titleLabel];
     [self.view addSubview:self.userInfoTableView];
-    [self.view addSubview:self.completeButton];
+    if (self.isLoginIn) {
+        [self.view addSubview:self.completeButton];
+    }
 }
 
 #pragma mark -- UITableViewDataSource and UITableViewDelegate
@@ -57,11 +62,16 @@
         
         UIImageView  *bgHeadImgView = [[UIImageView alloc] initWithFrame:CGRectMake((kScreenWidth-112)/2.0, 10, 112, 112)];
         bgHeadImgView.backgroundColor = [UIColor colorWithHexString:@"#F2F2F2"];
-        bgHeadImgView.layer.cornerRadius = 56;
+        bgHeadImgView.boderRadius = 56;
         [cell.contentView addSubview:bgHeadImgView];
         
         UIImageView  *headImageView = [[UIImageView alloc] initWithFrame:CGRectMake((kScreenWidth-100)/2.0, 16,100, 100)];
-        headImageView.image = self.userInfo.headImage?[self.userInfo.headImage imageWithCornerRadius:50]:[UIImage imageNamed:@"default_head_image"];
+        headImageView.boderRadius = 50;
+        if (kIsEmptyString(self.userModel.trait)) {
+            headImageView.image = [UIImage imageNamed:@"default_head_image"];
+        }else{
+            [headImageView sd_setImageWithURL:[NSURL URLWithString:self.userModel.trait] placeholderImage:[UIImage imageNamed:@"default_head_image"]];
+        }
         [cell.contentView addSubview:headImageView];
     }else{
         cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
@@ -70,17 +80,15 @@
         cell.detailTextLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
         
         if(indexPath.row == 1){
-            cell.detailTextLabel.text = self.userInfo.nick_name;
+            cell.detailTextLabel.text = self.userModel.tch_name;
         }else if (indexPath.row == 2){
-            if (self.userInfo.sex>0) {
-                cell.detailTextLabel.text = self.userInfo.sex==1?@"男":@"女";
-            }
+            cell.detailTextLabel.text = [self.userModel.sex integerValue]<2?@"男":@"女";
         }else if (indexPath.row == 3){
-            cell.detailTextLabel.text = self.userInfo.birth_date;
+            cell.detailTextLabel.text = [self.userModel.birthday integerValue]>0?[[ZYHelper sharedZYHelper] timeWithTimeIntervalNumber:self.userModel.birthday format:@"yyyy年MM月dd日"]:[NSDate getLastYearDate:20];
         }else if (indexPath.row == 4){
-            cell.detailTextLabel.text = self.userInfo.area;
+            cell.detailTextLabel.text = kIsEmptyString(self.userModel.province)?@"":[NSString stringWithFormat:@"%@ %@ %@",self.userModel.province,self.userModel.city,self.userModel.country];
         }else{
-            cell.detailTextLabel.text = kIsEmptyString(self.userInfo.intro)?@"":@"已填写";
+            cell.detailTextLabel.text = kIsEmptyString(self.userModel.intro)?@"":@"已填写";
         }
     }
     return cell;
@@ -100,10 +108,16 @@
     }else if (indexPath.row == 5){
         IntroductionViewController *introductionVC = [[IntroductionViewController alloc] init];
         kSelfWeak;
+        introductionVC.introStr = weakSelf.userModel.intro;
         introductionVC.getIntroBlock = ^(NSString *intro) {
-            weakSelf.userInfo.intro = intro;
-            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:5 inSection:0];
-            [weakSelf.userInfoTableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+            weakSelf.userModel.intro = intro;
+            
+            if (!weakSelf.isLoginIn) {
+                NSString *body = [NSString stringWithFormat:@"token=%@&intro=%@",weakSelf.userModel.token,weakSelf.userModel.intro];
+                [weakSelf setUserInfoRequestWithBody:body];
+            }else{
+                [weakSelf.userInfoTableView performSelectorOnMainThread:@selector(reloadData) withObject:nil waitUntilDone:YES];
+            }
         };
         [self presentViewController:introductionVC animated:YES completion:nil];
     }
@@ -118,34 +132,60 @@
 -(void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info{
     [self.imgPicker dismissViewControllerAnimated:YES completion:nil];
     UIImage* curImage=[info objectForKey:UIImagePickerControllerEditedImage];
-    curImage=[curImage cropImageWithSize:CGSizeMake(160, 160)];
-    self.userInfo.headImage = curImage;
+    selImage=[curImage cropImageWithSize:CGSizeMake(160, 160)];
     
-    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
-    [self.userInfoTableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-    
-    NSData *imageData = UIImagePNGRepresentation(curImage);
-    //将图片数据转化为64为加密字符串
-    NSString *encodeResult = [imageData base64EncodedStringWithOptions:NSDataBase64EncodingEndLineWithLineFeed];
-    NSString *body=[NSString stringWithFormat:@"photo=%@",encodeResult];
-    MyLog(@"body：%@",body);
+    NSMutableArray *arr = [NSMutableArray arrayWithObjects:selImage, nil];
+    NSMutableArray *encodeImageArr = [[ZYHelper sharedZYHelper] imageDataProcessingWithImgArray:arr];
+    NSString *encodeResult = [TCHttpRequest getValueWithParams:encodeImageArr];
+    kSelfWeak;
+    NSString *body = [NSString stringWithFormat:@"pic=%@&dir=1",encodeResult];
+    [TCHttpRequest postMethodWithURL:kUploadPicAPI body:body success:^(id json) {
+         weakSelf.userModel.trait = [[json objectForKey:@"data"] objectAtIndex:0];
+        
+        if (!weakSelf.isLoginIn) {
+            NSString *body = [NSString stringWithFormat:@"token=%@&trait=%@",weakSelf.userModel.token,weakSelf.userModel.trait];
+            [weakSelf setUserInfoRequestWithBody:body];
+        }else{
+            [weakSelf.userInfoTableView performSelectorOnMainThread:@selector(reloadData) withObject:nil waitUntilDone:YES];
+        }
+    }];
+}
+
+#pragma mark -- NIMUserManagerDelegate
+-(void)onUserInfoChanged:(NIMUser *)user{
+    MyLog(@"onUserInfoChanged");
 }
 
 #pragma mark -- Event response
 #pragma mark 设置个人信息完成
 -(void)confirmSetUserInfoAction{
-    if (self.isLoginIn) {
-        if (self.identityType==0) {
-            TeachInfoViewController *teachInfoVC = [[TeachInfoViewController alloc] init];
-            teachInfoVC.isLoginIn = YES;
-            [self.navigationController pushViewController:teachInfoVC animated:YES];
-        }else{
-            AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-            [appDelegate setMyRootViewController];
-        }
-    }else{
-        [self.navigationController popViewControllerAnimated:YES];
+    if (kIsEmptyObject(selImage)) {
+        [self.view makeToast:@"请上传头像" duration:1.0 position:CSToastPositionCenter];
+        return;
     }
+    
+    if (kIsEmptyString(self.userModel.tch_name)) {
+        [self.view makeToast:@"请设置昵称" duration:1.0 position:CSToastPositionCenter];
+        return;
+    }
+    
+    if (kIsEmptyString(self.userModel.trait)) {
+        [self.view makeToast:@"请上传头像" duration:1.0 position:CSToastPositionCenter];
+        return;
+    }
+    
+    if (kIsEmptyString(self.userModel.province)||kIsEmptyString(self.userModel.city)) {
+        [self.view makeToast:@"请设置所在地区" duration:1.0 position:CSToastPositionCenter];
+        return;
+    }
+    if (kIsEmptyString(self.userModel.intro)) {
+        [self.view makeToast:@"请填写个人简介" duration:1.0 position:CSToastPositionCenter];
+        return;
+    }
+    
+    self.userModel.sex = [self.userModel.sex integerValue]==0?@1:self.userModel.sex;
+    NSString *body = [NSString stringWithFormat:@"token=%@&trait=%@&username=%@&sex=%@&birthday=%@&province=%@&city=%@&country=%@&intro=%@",self.userModel.token,self.userModel.trait,self.userModel.tch_name,self.userModel.sex,self.userModel.birthday,self.userModel.province,self.userModel.city,self.userModel.country,self.userModel.intro];
+    [self setUserInfoRequestWithBody:body];
 }
 
 #pragma mark Private Methods
@@ -181,9 +221,13 @@
         }else if (toBeString.length>8){
             [weakSelf.view makeToast:@"昵称仅支持1-8个字符" duration:1.0 position:CSToastPositionCenter];
         }else{
-            weakSelf.userInfo.nick_name = toBeString;
-            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:1 inSection:0];
-            [weakSelf.userInfoTableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+            weakSelf.userModel.tch_name = toBeString;
+            if (!weakSelf.isLoginIn) {
+                NSString *body = [NSString stringWithFormat:@"token=%@&username=%@",weakSelf.userModel.token,weakSelf.userModel.tch_name];
+                [weakSelf setUserInfoRequestWithBody:body];
+            }else{
+                [weakSelf.userInfoTableView performSelectorOnMainThread:@selector(reloadData) withObject:nil waitUntilDone:YES];
+            }
         }
     }];
     [alertController addAction:cancelAction];
@@ -196,12 +240,18 @@
 #pragma mark 设置性别
 -(void)setUserSex{
     NSArray *sexArr = @[@"男",@"女"];
-    NSString *sexStr =self.userInfo.sex>0?sexArr[self.userInfo.sex-1]:@"男";
+    NSString *sexStr =[self.userModel.sex integerValue]<2?@"男":sexArr[[self.userModel.sex integerValue]-1];
     kSelfWeak;
     [BRStringPickerView showStringPickerWithTitle:@"选择性别" dataSource:sexArr defaultSelValue:sexStr isAutoSelect:NO resultBlock:^(id selectValue) {
-        weakSelf.userInfo.sex = [sexArr indexOfObject:selectValue]+1;
-        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:2 inSection:0];
-        [weakSelf.userInfoTableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+        NSInteger sex = [sexArr indexOfObject:selectValue]+1;
+        weakSelf.userModel.sex = [NSNumber numberWithInteger:sex];
+        
+        if (!weakSelf.isLoginIn) {
+            NSString *body = [NSString stringWithFormat:@"token=%@&sex=%@",weakSelf.userModel.token,weakSelf.userModel.sex];
+            [weakSelf setUserInfoRequestWithBody:body];
+        }else{
+            [weakSelf.userInfoTableView performSelectorOnMainThread:@selector(reloadData) withObject:nil waitUntilDone:YES];
+        }
     }];
 }
 
@@ -209,12 +259,17 @@
 -(void)setBirthDate{
     NSString *currentDate = [NSDate currentDate];
     NSString *minDate = [NSDate getLastYearDate:80];
-    NSString *defaultDate = [NSDate getLastYearDate:20];
+    
+    NSString *defaultDate = [self.userModel.birthday integerValue]>0?[[ZYHelper sharedZYHelper] timeWithTimeIntervalNumber:self.userModel.birthday format:@"yyyy年MM月dd日"]:[NSDate getLastYearDate:20];
     kSelfWeak;
     [BRDatePickerView showDatePickerWithTitle:@"出生日期" dateType:UIDatePickerModeDate defaultSelValue:defaultDate minDateStr:minDate maxDateStr:currentDate isAutoSelect:NO resultBlock:^(NSString *selectValue) {
-        weakSelf.userInfo.birth_date = selectValue;
-        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:3 inSection:0];
-        [weakSelf.userInfoTableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+        weakSelf.userModel.birthday = [[ZYHelper sharedZYHelper] timeSwitchTimestamp:selectValue format:@"yyyy年MM月dd日"];
+        if (!weakSelf.isLoginIn) {
+            NSString *body = [NSString stringWithFormat:@"token=%@&birthday=%@",weakSelf.userModel.token,weakSelf.userModel.birthday];
+            [weakSelf setUserInfoRequestWithBody:body];
+        }else{
+            [weakSelf.userInfoTableView performSelectorOnMainThread:@selector(reloadData) withObject:nil waitUntilDone:YES];
+        }
     }];
 }
 
@@ -222,9 +277,53 @@
 -(void)setUserArea{
     kSelfWeak;
     [BRAddressPickerView showAddressPickerWithTitle:@"所在地区" defaultSelected:@[@0,@0,@0] isAutoSelect:NO resultBlock:^(NSArray *selectAddressArr) {
-        weakSelf.userInfo.area = [NSString stringWithFormat:@"%@%@%@",selectAddressArr[0],selectAddressArr[1],selectAddressArr[2]];
-        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:4 inSection:0];
-        [weakSelf.userInfoTableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
+        weakSelf.userModel.province = selectAddressArr[0];
+        weakSelf.userModel.city = selectAddressArr[1];
+        weakSelf.userModel.country = selectAddressArr[2];
+        if (!weakSelf.isLoginIn) {
+            NSString *body = [NSString stringWithFormat:@"token=%@&province=%@&city=%@&country=%@",weakSelf.userModel.token,weakSelf.userModel.province,weakSelf.userModel.city,weakSelf.userModel.country];
+            [weakSelf setUserInfoRequestWithBody:body];
+        }else{
+            [weakSelf.userInfoTableView performSelectorOnMainThread:@selector(reloadData) withObject:nil waitUntilDone:YES];
+        }
+    }];
+}
+
+#pragma mark 设置个人信息
+-(void)setUserInfoRequestWithBody:(NSString *)body{
+    kSelfWeak;
+    [TCHttpRequest postMethodWithURL:kSetUserInfoAPI body:body success:^(id json) {
+        NSDictionary *userDict = @{@(NIMUserInfoUpdateTagNick):weakSelf.userModel.tch_name,@(NIMUserInfoUpdateTagAvatar):weakSelf.userModel.trait,@(NIMUserInfoUpdateTagGender):[NSString stringWithFormat:@"%@",weakSelf.userModel.sex]};
+        [[NIMSDK sharedSDK].userManager updateMyUserInfo:userDict completion:^(NSError * _Nullable error) {
+            if (error) {
+                MyLog(@"NIM updateMyUserInfo fail--error:%@",error.localizedDescription);
+            }else{
+                MyLog(@"NIM updateMyUserInfo success");
+            }
+        }];
+        if (!weakSelf.isLoginIn) {
+            NSMutableDictionary *dic = [[NSMutableDictionary alloc] initWithDictionary:[NSUserDefaultsInfos getDicValueforKey:kUserInfo]];
+            [dic setObject:weakSelf.userModel.trait forKey:@"trait"];
+            [dic setObject:weakSelf.userModel.tch_name forKey:@"tch_name"];
+            [NSUserDefaultsInfos putKey:kUserInfo anddict:dic];
+        }
+        [ZYHelper sharedZYHelper].isUpdateUserInfo = YES;
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            if (self.isLoginIn) {
+                if ([self.userModel.tch_label integerValue]==1) {
+                    TeachInfoViewController *teachInfoVC = [[TeachInfoViewController alloc] init];
+                    teachInfoVC.isLoginIn = YES;
+                    teachInfoVC.user = weakSelf.userModel;
+                    [self.navigationController pushViewController:teachInfoVC animated:YES];
+                }else{
+                    [NSUserDefaultsInfos putKey:kIsLogin andValue:[NSNumber numberWithBool:YES]];
+                    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+                    [appDelegate setMyRootViewController];
+                }
+            }else{
+                [weakSelf.userInfoTableView reloadData];
+            }
+        });
     }];
 }
 
@@ -254,20 +353,14 @@
 #pragma mark 确定
 -(LoginButton *)completeButton{
     if (!_completeButton) {
-        NSString *titleStr = self.identityType == 0?@"下一步":@"确定";
-        _completeButton = [[LoginButton alloc] initWithFrame:CGRectMake(48.0,kScreenHeight-(kScreenWidth-95.0)*(128.0/588.0)-69, kScreenWidth-95.0, (kScreenWidth-95.0)*(128.0/588.0)) title:titleStr];
+        NSString *titleStr = nil;
+        titleStr = [self.userModel.tch_label integerValue] == 1?@"下一步":@"确定";
+        _completeButton = [[LoginButton alloc] initWithFrame:CGRectMake(48.0,self.titleLabel.bottom+132+50*5+20, kScreenWidth-95.0, (kScreenWidth-95.0)*(128.0/588.0)) title:titleStr];
         [_completeButton addTarget:self action:@selector(confirmSetUserInfoAction) forControlEvents:UIControlEventTouchUpInside];
     }
     return _completeButton;
 }
 
-#pragma mark 用户信息
--(UserModel *)userInfo{
-    if (!_userInfo) {
-        _userInfo = [[UserModel alloc] init];
-    }
-    return _userInfo;
-}
 
 
 @end

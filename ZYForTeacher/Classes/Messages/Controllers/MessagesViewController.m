@@ -7,19 +7,23 @@
 //
 
 #import "MessagesViewController.h"
+#import "MessageModel.h"
+#import <NIMSDK/NIMSDK.h>
+#import "MessageTableViewCell.h"
+#import "MessagesListViewController.h"
 #import "SystemNewsViewController.h"
-#import "ChatViewController.h"
-#import "ConversationTableViewCell.h"
-#import "SystemNewsModel.h"
-#import "ConversationModel.h"
+#import "NIMSessionListCell.h"
+#import "NIMAvatarImageView.h"
+#import "NIMKitUtil.h"
+#import "NIMSessionViewController.h"
 
-@interface MessagesViewController ()<UITableViewDelegate,UITableViewDataSource>{
-    
-    SystemNewsModel   *systemNewsModel;
+@interface MessagesViewController ()<UITableViewDelegate,UITableViewDataSource,NIMConversationManagerDelegate>{
+   
 }
 
-@property (nonatomic,strong) UITableView     *messagesTableView;
-@property (nonatomic,strong) NSMutableArray  *conservationsArray;
+@property (nonatomic,strong) UITableView      *messagesTableView;
+@property (nonatomic,strong) NSMutableArray   *messagesArr;
+@property (nonatomic,strong) NSMutableArray   *recentSessions;
 
 @end
 
@@ -30,10 +34,19 @@
     self.baseTitle = @"消息";
     self.view.backgroundColor = [UIColor bgColor_Gray];
     
-    systemNewsModel = [[SystemNewsModel alloc] init];
+    [[NIMSDK sharedSDK].conversationManager addDelegate:self];
     
     [self.view addSubview:self.messagesTableView];
     [self loadMessageData];
+}
+
+#pragma mark
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    if ([ZYHelper sharedZYHelper].isUpdateMessageInfo) {
+        [self loadMessageData];
+        [ZYHelper sharedZYHelper].isUpdateMessageInfo = NO;
+    }
 }
 
 #pragma mark -- UITableViewDataSource
@@ -42,28 +55,37 @@
 }
 
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
-    return section == 0?1:self.conservationsArray.count;
+    return section == 0?self.messagesArr.count:self.recentSessions.count;
 }
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
-    static NSString *cellIdentifier=@"ConversationTableViewCell";
-    ConversationTableViewCell *cell=[tableView dequeueReusableCellWithIdentifier:cellIdentifier];
-    if (cell==nil) {
-        cell=[[ConversationTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIdentifier];
-    }
-    cell.selectionStyle=UITableViewCellSelectionStyleNone;
-    
-    id model;
     if (indexPath.section==0) {
-        if (indexPath.row==0) {
-            model=systemNewsModel;
-        }
+        MessageTableViewCell *cell = [[MessageTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
+        MessageModel *model = self.messagesArr[indexPath.row];
+        [cell messageCellDisplayWithMessage:model type:indexPath.row];
+        return cell;
     }else{
-        model=self.conservationsArray[indexPath.row];
+        static NSString * cellId = @"cellId";
+       
+        NIMSessionListCell * cell = [tableView dequeueReusableCellWithIdentifier:cellId];
+        if (!cell) {
+            cell = [[NIMSessionListCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellId];
+        }
+        NIMRecentSession *recent = self.recentSessions[indexPath.row];
+        [cell.avatarImageView setAvatarBySession:recent.session];
+        
+        cell.nameLabel.text = [NIMKitUtil showNick:recent.session.sessionId inSession:recent.session];
+        [cell.nameLabel sizeToFit];
+        
+        cell.messageLabel.text  = [self messageContent:recent.lastMessage];
+        [cell.messageLabel sizeToFit];
+        
+        cell.timeLabel.text = [NIMKitUtil showTime:recent.lastMessage.timestamp showDetail:NO];
+        [cell.timeLabel sizeToFit];
+        
+        [cell refresh:recent];
+        return cell;
     }
-    [cell conversationCellDisplayWithModel:model];
-    
-    return cell;
 }
 
 #pragma mark -- UITableViewDelegate
@@ -74,77 +96,218 @@
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     [tableView deselectRowAtIndexPath:indexPath animated:NO];
     if (indexPath.section==0) {
-        SystemNewsViewController *newsVC = [[SystemNewsViewController alloc] init];
-        [self.navigationController pushViewController:newsVC animated:YES];
+        if (indexPath.row==0) {
+            SystemNewsViewController *systemNewsVC = [[SystemNewsViewController alloc] init];
+            [self.navigationController pushViewController:systemNewsVC animated:YES];
+        }else{
+            MessagesListViewController  *messagesListVC = [[MessagesListViewController alloc] init];
+            messagesListVC.type = indexPath.row;
+            [self.navigationController pushViewController:messagesListVC animated:YES];
+        }
     }else{
-        ChatViewController *chatVC = [[ChatViewController alloc] init];
-        [self.navigationController pushViewController:chatVC animated:YES];
+        NIMRecentSession *recentSession = self.recentSessions[indexPath.row];
+        NIMSessionViewController *vc = [[NIMSessionViewController alloc] initWithSession:recentSession.session];
+
+        [self.navigationController pushViewController:vc animated:YES];
     }
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section{
-    if (section==1&&self.conservationsArray.count>0) {
-        return 40;
+    if (section==0) {
+        return 3.0f;
     }else{
-        return 0.1;
+        return 10.0;
     }
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section{
-    return 0.1;
+    return 0.1f;
 }
 
--(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section{
-    if (section==1&&self.conservationsArray.count>0) {
-        return @"我的老师";
-    }else{
-        return @"";
+-(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
+    return nil;
+}
+
+#pragma mark - NIMConversationManagerDelegate
+#pragma mark NIMConversationManagerDelegate
+#pragma mark 增加最近会话的回调
+-(void)didAddRecentSession:(NIMRecentSession *)recentSession totalUnreadCount:(NSInteger)totalUnreadCount{
+    MyLog(@"didAddRecentSession");
+    NIMMessageType type = recentSession.lastMessage.messageType;
+    if (type==NIMMessageTypeText||type==NIMMessageTypeImage||type==NIMMessageTypeAudio) {
+        [self.recentSessions addObject:recentSession];
+        [self sortRecentSessions];
+        [self.messagesTableView reloadData];
+    }
+}
+
+#pragma mark 最近会话修改的回调
+-(void)didUpdateRecentSession:(NIMRecentSession *)recentSession totalUnreadCount:(NSInteger)totalUnreadCount{
+    MyLog(@"更新会话 didUpdateRecentSession");
+    NIMMessageType type = recentSession.lastMessage.messageType;
+    if (type==NIMMessageTypeText||type==NIMMessageTypeImage||type==NIMMessageTypeAudio) {
+        for (NIMRecentSession *recent in self.recentSessions) {
+            if ([recentSession.session.sessionId isEqualToString:recent.session.sessionId]) {
+                [self.recentSessions removeObject:recent];
+                break;
+            }
+        }
+        NSInteger insert = [self findInsertPlace:recentSession];
+        [self.recentSessions insertObject:recentSession atIndex:insert];
+        [self.messagesTableView reloadData];
     }
 }
 
 #pragma mark -- Private Methods
 #pragma mark 加载数据
 -(void)loadMessageData{
-    systemNewsModel.isRead = NO;
-    systemNewsModel.unreadCount = 28;
-    systemNewsModel.title = @"充值活动满100送10";
-    systemNewsModel.send_time = @"今天 16:00";
-    
-    NSArray *teachers = @[@"小美老师",@"小芳老师",@"小明老师",@"张三"];
-    NSArray *timesArr = @[@"今天 09:00" ,@"2018/08/12 12:30",@"2018/08/11 15:30",@"2018/08/10 18:30"];
-    NSArray *msgArr = @[@"最近会话用于表示会话列表页的数据模型",@"当收到或者一条消息时，会自动生成这个消息对应的最近会话",@"获取最近会话，一般用于首页显示会话列表",@"在数据量过万的情况下会有一定的耗时"];
-    NSMutableArray *tempArr = [[NSMutableArray alloc] init];
-    for (NSInteger i=0; i<teachers.count; i++) {
-        ConversationModel *model = [[ConversationModel alloc] init];
-        model.lastMsgUserName = teachers[i];
-        model.lastMsgHeadPic = @"photo";
-        model.lastMsgTime = timesArr[i];
-        model.lastMsg = msgArr[i];
-        model.unreadCount = i*35+2;
-        [tempArr addObject:model];
-    }
-    self.conservationsArray = tempArr;
-    [self.messagesTableView reloadData];
+    kSelfWeak;
+    NSString *body = [NSString stringWithFormat:@"token=%@",kUserTokenValue];
+    [TCHttpRequest postMethodWithoutLoadingForURL:kMessageLastAPI body:body success:^(id json) {
+        NSDictionary *data = [json objectForKey:@"data"];
+        
+        NSMutableArray *tempMessageArr = [[NSMutableArray alloc] init];
+        //系统消息
+        NSDictionary *systemInfo = [data valueForKey:@"sys"];
+        MessageModel *systemModel = [[MessageModel alloc] init];
+        [systemModel setValues:systemInfo];
+        systemModel.icon = @"news";
+        systemModel.myTitle = @"系统消息";
+        systemModel.desc = systemInfo[@"desc"];
+        [tempMessageArr addObject:systemModel];
+        
+        
+        //支付信息
+        NSDictionary *payInfo = [data valueForKey:@"pay"];
+        MessageModel *payModel = [[MessageModel alloc] init];
+        [payModel setValues:payInfo];
+        payModel.icon = @"news_pay";
+        payModel.myTitle = @"支付消息";
+        [tempMessageArr addObject:payModel];
+        
+        
+        //评论信息
+        NSDictionary *commentInfo = [data valueForKey:@"comment"];
+        MessageModel *commentModel = [[MessageModel alloc] init];
+        [commentModel setValues:commentInfo];
+        commentModel.icon = @"news_comment";
+        commentModel.myTitle = @"评论消息";
+        [tempMessageArr addObject:commentModel];
+        
+        //投诉信息
+        NSDictionary *complainInfo = [data valueForKey:@"complain"];
+        MessageModel *complainModel = [[MessageModel alloc] init];
+        [complainModel setValues:complainInfo];
+        complainModel.icon = @"news";
+        complainModel.myTitle = @"投诉消息";
+        [tempMessageArr addObject:complainModel];
+        
+        weakSelf.messagesArr = tempMessageArr;
+        
+        NSArray *sessionsArr = [[NIMSDK sharedSDK].conversationManager allRecentSessions];
+        NSMutableArray *tempSessionsArr = [[NSMutableArray alloc] init];
+        for (NIMRecentSession *session in sessionsArr) {
+            NIMMessageType type = session.lastMessage.messageType;
+            if (type==NIMMessageTypeText||type==NIMMessageTypeImage||type==NIMMessageTypeAudio) {
+                [tempSessionsArr addObject:session];
+            }
+        }
+        weakSelf.recentSessions = tempSessionsArr;
+        
+        MyLog(@"sessionArr:%@",sessionsArr);
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf.messagesTableView reloadData];
+        });
+        
+    }];
 }
 
+#pragma mark -- 解析消息
+- (NSString*)messageContent:(NIMMessage*)lastMessage{
+    NSString *text = @"";
+    switch (lastMessage.messageType) {
+        case NIMMessageTypeText:
+            text = lastMessage.text;
+            break;
+        case NIMMessageTypeImage:
+            text = @"[图片]";
+            break;
+        case NIMMessageTypeAudio:
+            text = @"[语音]";
+            break;
+        default:
+            text = @"[未知消息]";
+    }
+    return text;
+}
+
+#pragma mark 会话进行排序
+- (void)sortRecentSessions{
+    [self.recentSessions sortUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+        NIMRecentSession *item1 = obj1;
+        NIMRecentSession *item2 = obj2;
+        if (item1.lastMessage.timestamp < item2.lastMessage.timestamp) {
+            return NSOrderedDescending;
+        }
+        if (item1.lastMessage.timestamp > item2.lastMessage.timestamp) {
+            return NSOrderedAscending;
+        }
+        return NSOrderedSame;
+    }];
+}
+
+#pragma mark 查找插入会话的位置
+- (NSInteger)findInsertPlace:(NIMRecentSession *)recentSession{
+    __block NSUInteger matchIdx = 0;
+    __block BOOL find = NO;
+    [self.recentSessions enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+        NIMRecentSession *item = obj;
+        if (item.lastMessage.timestamp <= recentSession.lastMessage.timestamp) {
+            *stop = YES;
+            find  = YES;
+            matchIdx = idx;
+        }
+    }];
+    if (find) {
+        return matchIdx;
+    }else{
+        return self.recentSessions.count;
+    }
+}
+
+#pragma mark -- Getters
 #pragma mark -- 消息列表视图
 -(UITableView *)messagesTableView{
     if (!_messagesTableView) {
-        _messagesTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, kNavHeight+3.0, kScreenWidth, kScreenHeight-kNavHeight) style:UITableViewStylePlain];
+        _messagesTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, kNavHeight, kScreenWidth, kScreenHeight-kNavHeight) style:UITableViewStyleGrouped];
         _messagesTableView.dataSource = self;
         _messagesTableView.delegate = self;
         _messagesTableView.tableFooterView = [[UIView alloc] init];
         _messagesTableView.backgroundColor = [UIColor bgColor_Gray];
+        _messagesTableView.estimatedSectionFooterHeight = 0.0;
+        _messagesTableView.estimatedSectionHeaderHeight = 0.0;
     }
     return _messagesTableView;
 }
 
 #pragma mark 会话列表
--(NSMutableArray *)conservationsArray{
-    if (!_conservationsArray) {
-        _conservationsArray = [[NSMutableArray alloc] init];
+-(NSMutableArray *)recentSessions{
+    if (!_recentSessions) {
+        _recentSessions = [[NSMutableArray alloc] init];
     }
-    return _conservationsArray;
+    return _recentSessions;
+}
+
+-(NSMutableArray *)messagesArr{
+    if (!_messagesArr) {
+        _messagesArr = [[NSMutableArray alloc] init];
+    }
+    return _messagesArr;
+}
+
+-(void)dealloc{
+    [[NIMSDK sharedSDK].conversationManager removeDelegate:self];
 }
 
 @end

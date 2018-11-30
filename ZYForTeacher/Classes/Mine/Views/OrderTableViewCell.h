@@ -11,6 +11,9 @@
 
 @interface OrderTableViewCell : UITableViewCell
 
-@property(nonatomic ,strong) OrderModel *myOrder;
+@property (nonatomic, strong) UIButton   *cancelButton;       //取消订单
+@property (nonatomic ,strong) UIButton   *checkButton;
+
+@property (nonatomic ,strong) OrderModel *myOrder;
 
 @end

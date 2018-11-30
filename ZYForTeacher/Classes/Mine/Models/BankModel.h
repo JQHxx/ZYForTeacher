@@ -10,8 +10,13 @@
 
 @interface BankModel : NSObject
 
+@property (nonatomic , copy ) NSString *cardBgImage;
 @property (nonatomic , copy ) NSString *cardImage;
-@property (nonatomic , copy ) NSString *bankName;
-@property (nonatomic , copy ) NSString *bankNum;
+@property (nonatomic , copy ) NSString *bankName;   //开户行
+@property (nonatomic , copy ) NSString *bankNum;   //卡号
+@property (nonatomic , copy ) NSString *bankType;  //卡类型
+@property (nonatomic , copy ) NSString *cardHolder;  //持卡人
+
+
 
 @end

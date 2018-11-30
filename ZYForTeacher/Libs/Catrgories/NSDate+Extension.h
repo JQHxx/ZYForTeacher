@@ -16,6 +16,11 @@
 + (NSInteger )currentYear;
 
 /**
+ *  @return 当前年月
+ */
++ (NSString *)currentYearMonth;
+
+/**
  *  @return 当前日期
  */
 + (NSString *)currentDate;

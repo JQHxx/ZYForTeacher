@@ -25,13 +25,16 @@
 */
 
 #import "BindBankCardViewController.h"
+#import "BankCardListViewController.h"
+#import "WithdrawViewController.h"
+#import "BankModel.h"
 
-@interface BindBankCardViewController (){
-    UILabel    *nameLabel;
-    UILabel    *numLabel;
-    UILabel    *bankLabel;
-    UILabel    *bankTypeLabel;
+@interface BindBankCardViewController ()<UITableViewDelegate,UITableViewDataSource>{
+    NSArray    *titles;
 }
+
+@property (nonatomic , strong) UITableView *bankTableView;
+@property (nonatomic , strong) UIButton    *confirmBtn;
 
 @end
 
@@ -41,59 +44,104 @@
     [super viewDidLoad];
     self.baseTitle = @"绑定银行卡";
     
+    titles = @[@"持卡人",@"银行卡号",@"开户行",@"卡类型"];
     
-    [self initBindBankCardView];
-    [self loadBankInfo];
+    [self.view addSubview:self.bankTableView];
+    [self.view addSubview:self.confirmBtn];
+}
+
+#pragma mark -- UITableViewDataSource
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
+    return titles.count;
+}
+
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    cell.textLabel.text = titles[indexPath.row];
+    cell.textLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+    cell.textLabel.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
+    
+    UILabel *valuelabel = [[UILabel alloc] initWithFrame:CGRectMake(106, 15, kScreenWidth-120, 22)];
+    valuelabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+    valuelabel.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
+    [cell.contentView addSubview:valuelabel];
+    
+    if (indexPath.row==0) {
+        valuelabel.text = self.bank.cardHolder;
+    }else if (indexPath.row==1){
+        valuelabel.text = self.bank.bankNum;
+    }else if (indexPath.row==2){
+        valuelabel.text = self.bank.bankName;
+    }else{
+        valuelabel.text = self.bank.bankType;
+    }
+    
+    return cell;
+}
+
+-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+    return  50;
 }
 
 #pragma mark -- Event Response
-#pragma mark
+#pragma mark 绑定银行卡
 -(void)confirmBindBankCardAction{
-    
+    kSelfWeak;
+    NSString *label = [[ZYHelper sharedZYHelper] getBankCodeWithBankName:self.bank.bankName];
+    NSString *cardNum = [self.bank.bankNum stringByReplacingOccurrencesOfString:@" " withString:@""];
+    NSString *body = [NSString stringWithFormat:@"token=%@&card_no=%@&realname=%@&bank=%@&label=%@",kUserTokenValue,cardNum,self.bank.cardHolder,self.bank.bankName,kIsEmptyString(label)?@"bank":label];
+    [TCHttpRequest postMethodWithURL:kAddBankCardAPI body:body success:^(id json) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf.view makeToast:@"银行卡绑定成功" duration:1.0 position:CSToastPositionCenter];
+        });
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            BOOL isBankList = NO;
+            for (BaseViewController *controller in weakSelf.navigationController.viewControllers) {
+                if ([controller isKindOfClass:[BankCardListViewController class]]) {
+                    [ZYHelper sharedZYHelper].isUpdateBankList = YES;
+                    isBankList = YES;
+                    [weakSelf.navigationController popToViewController:controller animated:YES];
+                    break;
+                }
+            }
+            if (!isBankList) {
+                for (BaseViewController *controller in weakSelf.navigationController.viewControllers) {
+                    if ([controller isKindOfClass:[WithdrawViewController class]]) {
+                        [ZYHelper sharedZYHelper].isUpdateWithdraw = YES;
+                        [weakSelf.navigationController popToViewController:controller animated:YES];
+                        break;
+                    }
+                }
+            }
+        });
+    }];
 }
 
 #pragma mark -- Private Methods
--(void)loadBankInfo{
-    bankLabel.text = [NSString stringWithFormat:@"所属行：%@",@"交通银行"];
-    bankTypeLabel.text = @"银行卡类型：储蓄卡";
+#pragma mark -- getters and setters
+-(UITableView *)bankTableView{
+    if (!_bankTableView) {
+        _bankTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, kNavHeight+10, kScreenWidth, kScreenHeight-kNavHeight-10) style:UITableViewStylePlain];
+        _bankTableView.dataSource = self;
+        _bankTableView.delegate = self;
+        _bankTableView.scrollEnabled = NO;
+        _bankTableView.tableFooterView = [[UIView alloc] init];
+    }
+    return _bankTableView;
 }
 
-#pragma mark 初始化视图
--(void)initBindBankCardView{
-    nameLabel = [[UILabel alloc] initWithFrame:CGRectMake(30, kNavHeight+10, kScreenWidth-60, 20)];
-    nameLabel.font = kFontWithSize(14);
-    nameLabel.textColor = [UIColor blackColor];
-    nameLabel.textAlignment = NSTextAlignmentCenter;
-    nameLabel.text = [NSString stringWithFormat:@"持卡人姓名：%@",self.cardholder];
-    [self.view addSubview:nameLabel];
-    
-    numLabel = [[UILabel alloc] initWithFrame:CGRectMake(30, nameLabel.bottom+5, kScreenWidth-60, 20)];
-    numLabel.font = kFontWithSize(14);
-    numLabel.textColor = [UIColor blackColor];
-    numLabel.textAlignment = NSTextAlignmentCenter;
-    numLabel.text = [NSString stringWithFormat:@"银行卡号码：%@",self.bankCardNumber];
-    [self.view addSubview:numLabel];
-    
-    bankLabel = [[UILabel alloc] initWithFrame:CGRectMake(30, numLabel.bottom+5, kScreenWidth-60, 20)];
-    bankLabel.font = kFontWithSize(14);
-    bankLabel.textColor = [UIColor blackColor];
-    bankLabel.textAlignment = NSTextAlignmentCenter;
-    [self.view addSubview:bankLabel];
-    
-    bankTypeLabel = [[UILabel alloc] initWithFrame:CGRectMake(30, bankLabel.bottom+5, kScreenWidth-60, 20)];
-    bankTypeLabel.font = kFontWithSize(14);
-    bankTypeLabel.textColor = [UIColor blackColor];
-    bankTypeLabel.textAlignment = NSTextAlignmentCenter;
-    [self.view addSubview:bankTypeLabel];
-    
-    
-    UIButton *confirmBtn = [[UIButton alloc] initWithFrame:CGRectMake(40, bankTypeLabel.bottom+30, kScreenWidth-80, 35)];
-    [confirmBtn setTitle:@"确定" forState:UIControlStateNormal];
-    [confirmBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    confirmBtn.backgroundColor = [UIColor redColor];
-    confirmBtn.layer.cornerRadius = 5;
-    [confirmBtn addTarget:self action:@selector(confirmBindBankCardAction) forControlEvents:UIControlEventTouchUpInside];
-    [self.view addSubview:confirmBtn];
+#pragma mark 确定绑定
+-(UIButton *)confirmBtn{
+    if (!_confirmBtn) {
+        _confirmBtn = [[UIButton alloc] initWithFrame:CGRectMake(48,kNavHeight+244 , kScreenWidth-95,(kScreenWidth-95)*(128.0/588.0))];
+        [_confirmBtn setTitle:@"确定绑定" forState:UIControlStateNormal];
+        [_confirmBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        [_confirmBtn setBackgroundImage:[UIImage imageNamed:@"login_bg_btn"] forState:UIControlStateNormal];
+        [_confirmBtn addTarget:self action:@selector(confirmBindBankCardAction) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _confirmBtn;
 }
+
 
 @end

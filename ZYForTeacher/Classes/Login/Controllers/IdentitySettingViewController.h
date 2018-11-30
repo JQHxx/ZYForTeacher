@@ -7,7 +7,10 @@
 //
 
 #import "BaseViewController.h"
+#import "UserModel.h"
 
 @interface IdentitySettingViewController : BaseViewController
+
+@property (nonatomic ,strong) UserModel *model;
 
 @end

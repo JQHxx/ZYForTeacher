@@ -12,6 +12,8 @@ typedef void(^GetIntroInfoBackBlock)(NSString *intro);
 
 @interface IntroductionViewController : BaseViewController
 
+@property (nonatomic, copy ) NSString *introStr;
+
 @property (nonatomic ,copy)GetIntroInfoBackBlock getIntroBlock;
 
 

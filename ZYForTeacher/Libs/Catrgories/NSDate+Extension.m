@@ -16,6 +16,13 @@
     return [calendar component:NSCalendarUnitYear fromDate:[NSDate date]];
 }
 
+#pragma mark 当前年月
++(NSString *)currentYearMonth{
+    NSDateFormatter *format = [[NSDateFormatter alloc]init];
+    [format setDateFormat:@"yyyy-MM"];
+    return [format stringFromDate:[NSDate date]];
+}
+
 #pragma mark 当前日期
 +(NSString *)currentDate{
     NSDateFormatter *format = [[NSDateFormatter alloc]init];

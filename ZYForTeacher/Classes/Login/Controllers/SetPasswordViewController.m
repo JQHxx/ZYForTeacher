@@ -8,7 +8,7 @@
 
 #import "SetPasswordViewController.h"
 #import "AppDelegate.h"
-#import "AppDelegate+Extension.h"
+#import "AppDelegate.h"
 #import "LoginTextView.h"
 #import "LoginButton.h"
 
@@ -35,6 +35,11 @@
 #pragma mark -- Event response
 #pragma mark 完成设置
 -(void)confirmSetPwdAction{
+    if (kIsEmptyString(self.passwordTextView.myText.text)||kIsEmptyString(self.confirmPwdTextView.myText.text)) {
+        [self.view makeToast:@"密码不能为空" duration:1.0 position:CSToastPositionCenter];
+        return;
+    }
+    
     if (self.passwordTextView.myText.text.length<6||self.confirmPwdTextView.myText.text.length<6) {
         [self.view makeToast:@"密码不能少于6位" duration:1.0 position:CSToastPositionCenter];
         return;
@@ -45,9 +50,18 @@
         return;
     }
     
-    
-    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-    [appDelegate setMyRootViewController];
+    NSString *passwordStr = [self.passwordTextView.myText.text MD5];
+    kSelfWeak;
+    NSString *body = [NSString stringWithFormat:@"mobile=%@&code=%@&password=%@",self.phone,self.code,passwordStr];
+    [TCHttpRequest postMethodWithURL:kSetPwdAPI body:body success:^(id json) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf.view makeToast:@"密码设置成功" duration:1.0 position:CSToastPositionCenter];
+        });
+        
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5*NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [weakSelf.navigationController popToRootViewControllerAnimated:YES];
+        });
+    }];
 }
 
 #pragma mark 密码是否可见

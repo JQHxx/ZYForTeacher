@@ -1,16 +1,15 @@
 //
 //  ConnecttingViewController.h
-//  ZYForTeacher
+//  ZuoYe
 //
-//  Created by vision on 2018/8/31.
+//  Created by vision on 2018/8/14.
 //  Copyright © 2018年 vision. All rights reserved.
 //
 
 #import "BaseViewController.h"
-#import "OrderModel.h"
+#import "BaseConnecttingViewController.h"
 
-@interface ConnecttingViewController : BaseViewController
+@interface ConnecttingViewController : BaseConnecttingViewController
 
-@property (nonatomic, strong ) OrderModel *orderModel;
 
 @end

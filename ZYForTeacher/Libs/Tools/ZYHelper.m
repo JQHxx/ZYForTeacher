@@ -13,37 +13,77 @@
 
 singleton_implementation(ZYHelper)
 
-#pragma mark 根据年级获取科目
--(NSArray *)getCourseForStage:(NSString *)stage{
-    NSArray *arr =nil;
-    if ([stage isEqualToString:@"初中"]) {
-        arr = @[@"语文",@"数学",@"英语",@"物理",@"化学",@"生物",@"历史",@"地理",@"道德与法治"];
-    }else{
-        arr = @[@"语文",@"数学",@"英语"];
+#pragma mark 获取年级
+-(NSArray *)grades{
+    NSString *fliePath = [self getFilePathWithFileName:@"grade"];
+    return [NSArray arrayWithContentsOfFile:fliePath];
+}
+
+#pragma mark 设置年级
+-(void)setGrades:(NSArray *)grades{
+    if (grades.count>0) {
+        NSString *filepath = [self getFilePathWithFileName:@"grade"];
+        NSMutableArray *tempArr = [[NSMutableArray alloc] init];
+        for (NSDictionary *dict in grades) {
+            [tempArr addObject:dict[@"grade"]];
+        }
+        [tempArr writeToFile:filepath atomically:YES];
     }
-    return arr;
+}
+
+#pragma mark 解析年级
+-(NSString *)parseToGradeStringForGrades:(NSArray *)gradesArr{
+    NSString *grade = @"";
+    for (NSString *gradeStr in gradesArr) {
+        grade =[grade stringByAppendingString:[gradeStr substringToIndex:1]];
+        grade = [grade stringByAppendingString:@"/"];
+    }
+    NSString *tempStr = [grade substringToIndex:grade.length-1];
+    return [tempStr stringByAppendingString:@"年级"];
+}
+
+#pragma mark 获取科目
+-(NSArray *)subjects{
+    NSString *fliePath = [self getFilePathWithFileName:@"subject"];
+    return [NSArray arrayWithContentsOfFile:fliePath];
+}
+
+#pragma mark 设置科目
+-(void)setSubjects:(NSArray *)subjects{
+    NSString *filepath = [self getFilePathWithFileName:@"subject"];
+    NSMutableArray *tempArr = [[NSMutableArray alloc] init];
+    for (NSDictionary *dict in subjects) {
+        [tempArr addObject:dict[@"subject"]];
+    }
+    [tempArr writeToFile:filepath atomically:YES];
+}
+
+#pragma mark 是否认证
+-(BOOL)isCertified{
+    NSNumber *authId = [NSUserDefaultsInfos getValueforKey:kAuthIdentidy];
+    NSNumber *authEdu = [NSUserDefaultsInfos getValueforKey:kAuthEducation];
+    return ([authId integerValue]==2)&&([authEdu integerValue]==2);
+}
+
+#pragma mark 银行信息
+-(NSDictionary *)banksDict{
+    NSString *filepath = [[NSBundle mainBundle] pathForResource:@"banks" ofType:@"plist"];
+    NSDictionary *dict = [[NSDictionary alloc] initWithContentsOfFile:filepath];
+    return dict;
+}
+
+#pragma mark 根据银行获取银行卡代号
+-(NSString *)getBankCodeWithBankName:(NSString *)bankName{
+    __block NSString *bankCode = nil;
+    [self.banksDict enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        if ([obj isEqualToString:bankName]) {
+            bankCode = key;
+        }
+    }];
+    return bankCode;
 }
 
 #pragma mark -- 辅导订单相关
-#pragma mark 获取订单状态
--(NSString *)getStateStringWithIndex:(NSInteger)index{
-    NSString *state = @"";
-    if (index == 0) {
-        state = @"待接单";
-    }else if (index == 1){
-        state = @"已接单待辅导";
-    }else if (index == 2){
-        state = @"辅导中";
-    }else if (index == 3){
-        state = @"待付款";
-    }else if (index == 4){
-        state = @"已完成";
-    }else if (index == 5){
-        state = @"已取消";
-    }
-    return state;
-}
-
 #pragma mark -- 限制emoji表情输入
 -(BOOL)strIsContainEmojiWithStr:(NSString*)str{
     __block BOOL returnValue =NO;
@@ -112,7 +152,82 @@ singleton_implementation(ZYHelper)
     return YES;
 }
 
+#pragma mark 对图片base64加密
+- (NSMutableArray *)imageDataProcessingWithImgArray:(NSMutableArray *)imgArray{
+    NSMutableArray *photoArray = [NSMutableArray array];
+    for (NSInteger i = 0; i < imgArray.count; i++) {
+        NSData *imageData = [UIImage zipNSDataWithImage:imgArray[i]];
+//        NSData *imageData = UIImagePNGRepresentation(imgArray[i]);
+        //将图片数据转化为64为加密字符串
+        NSString *encodeResult = [imageData base64EncodedStringWithOptions:0];
+        [photoArray addObject:encodeResult];
+    }
+    return photoArray;
+}
 
+#pragma mark 将某个时间转化成 时间戳
+-(NSNumber *)timeSwitchTimestamp:(NSString *)formatTime format:(NSString *)format{
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateStyle:NSDateFormatterMediumStyle];
+    [formatter setTimeStyle:NSDateFormatterShortStyle];
+    [formatter setDateFormat:format];
+    
+    NSTimeZone* timeZone = [NSTimeZone timeZoneWithName:@"Asia/Beijing"];
+    [formatter setTimeZone:timeZone];
+    NSDate* date = [formatter dateFromString:formatTime];    //将字符串按formatter转成nsdate
+    return [NSNumber numberWithDouble:[date timeIntervalSince1970]];
+}
 
+#pragma mark 时间戳转化为时间
+- (NSString *)timeWithTimeIntervalNumber:(NSNumber *)timeNum format:(NSString *)format{
+    // 格式化时间
+    NSDateFormatter* formatter = [[NSDateFormatter alloc] init];
+    formatter.timeZone = [NSTimeZone timeZoneWithName:@"Asia/Beijing"];
+    [formatter setDateStyle:NSDateFormatterMediumStyle];
+    [formatter setTimeStyle:NSDateFormatterShortStyle];
+    [formatter setDateFormat:format];
+    
+    NSDate* date = [NSDate dateWithTimeIntervalSince1970:[timeNum integerValue]];
+    NSString* dateString = [formatter stringFromDate:date];
+    return dateString;
+}
+
+#pragma mark 将年级字符串数组转为年级id数组
+-(NSMutableArray *)setGradeIdsArrayWithGradeStrs:(NSArray *)grades{
+    NSMutableArray *tempArr = [[NSMutableArray alloc] init];
+    for (NSString *grade in grades) {
+        NSInteger index = [self.grades indexOfObject:grade];
+        NSNumber *indexNum = [NSNumber numberWithInteger:index+1];
+        [tempArr addObject:indexNum];
+    }
+    return tempArr;
+}
+
+-(NSString *)pleaseInsertStarTimeo:(NSString *)time1 andInsertEndTime:(NSString *)time2{
+    // 1.将时间转换为date
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    formatter.dateFormat = @"yyyy年MM月dd日 HH:mm:ss";
+    NSDate *date1 = [formatter dateFromString:time1];
+    NSDate *date2 = [formatter dateFromString:time2];
+    
+    // 2.创建日历
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    NSCalendarUnit type = NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond;
+    // 3.利用日历对象比较两个时间的差值
+    NSDateComponents *cmps = [calendar components:type fromDate:date1 toDate:date2 options:0];
+    // 4.输出结果
+    NSLog(@"两个时间相差%ld年%ld月%ld日%ld小时%ld分钟%ld秒", cmps.year, cmps.month, cmps.day, cmps.hour, cmps.minute, cmps.second);
+    
+    return [NSString stringWithFormat:@"%ld小时%ld分钟",cmps.hour, cmps.minute];
+}
+
+#pragma mark -- Private methods
+#pragma mark  获取年级目录
+-(NSString *)getFilePathWithFileName:(NSString *)fileName{
+    //获取plist文件的路径
+    NSArray *pathArray = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *path1 = [pathArray objectAtIndex:0];
+    return [path1 stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.plist",fileName]];
+}
 
 @end

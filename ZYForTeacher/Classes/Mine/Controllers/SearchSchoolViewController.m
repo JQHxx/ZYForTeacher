@@ -37,7 +37,6 @@
 #pragma mark 搜索框编辑开始
 -(void)searchBarTextDidBeginEditing:(UISearchBar *)searchBar{
     [self.mySearchBar setShowsCancelButton:YES animated:YES];
-    [self setSearchBarCancelButton];
 }
 
 - (BOOL)searchBar:(UISearchBar *)searchBar shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text{  if ([searchBar isFirstResponder]) {
@@ -68,6 +67,9 @@
             [self.view addSubview:self.searchResultVC.view];
             self.searchResultVC.searchText = searchText;
         }
+    }else{
+        [self.searchResultVC.view removeFromSuperview];
+        self.searchResultVC = nil;
     }
 }
 
@@ -77,10 +79,8 @@
     if (isSearchBool) {
         [self.view makeToast:@"不能搜索特殊符号" duration:1.0 position:CSToastPositionCenter];
         [self.mySearchBar resignFirstResponder];
-        [self setSearchBarCancelButton];
     } else {
         [self.mySearchBar resignFirstResponder];
-        [self setSearchBarCancelButton];
         
         NSString *searchText=[searchBar.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
         searchBar.text=searchText;
@@ -98,29 +98,23 @@
     [self.navigationController popViewControllerAnimated:YES];
 }
 
-
-
-#pragma mark -- Private Methods
-#pragma mark 设置取消按钮
--(void)setSearchBarCancelButton{
-    for (id cc in [self.mySearchBar.subviews[0] subviews]) {
-        if ([cc isKindOfClass:[UIButton class]]) {
-            UIButton *btn = (UIButton*)cc;
-            [btn setTitle:@"取消" forState:UIControlStateNormal];
-            [btn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-            btn.enabled=YES;
-        }
-    }
-}
-
 #pragma mark -- Getters and Setters
 #pragma mark 搜索框
 -(UISearchBar *)mySearchBar{
     if (_mySearchBar==nil) {
         _mySearchBar=[[UISearchBar alloc] initWithFrame:CGRectMake(0, KStatusHeight, kScreenWidth, kNavHeight)];
         _mySearchBar.delegate=self;
-        _mySearchBar.placeholder=@"请输入城市名称";
-        [_mySearchBar setBackgroundImage:[UIImage imageWithColor:kSystemColor size:CGSizeMake(kScreenWidth, kNavHeight)]];
+        _mySearchBar.placeholder=@"请输入学校名称";
+        [_mySearchBar setBackgroundImage:[UIImage imageWithColor:[UIColor whiteColor] size:CGSizeMake(kScreenWidth, kNavHeight)]];
+        
+        //取出textfield
+        UITextField *searchField=[_mySearchBar valueForKey:@"_searchField"];
+        searchField.backgroundColor  = [UIColor colorWithHexString:@"#F1F1F2"];
+        searchField.layer.cornerRadius = 4.0;
+        
+        UIButton *cancleBtn = [_mySearchBar valueForKey:@"_cancelButton"];
+        [cancleBtn setTitleColor:[UIColor colorWithHexString:@"#4A4A4A"] forState:UIControlStateNormal];
+        
     }
     return _mySearchBar;
 }

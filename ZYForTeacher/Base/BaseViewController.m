@@ -7,6 +7,7 @@
 //
 
 #import "BaseViewController.h"
+#import "UIViewController+MMDrawerController.h"
 
 @interface BaseViewController ()<UIImagePickerControllerDelegate,UINavigationControllerDelegate>{
     UIView        *navView;
@@ -85,7 +86,7 @@
     titleLabel.textAlignment=NSTextAlignmentCenter;
     [navView addSubview:titleLabel];
     
-    self.rightBtn=[[UIButton alloc] initWithFrame:CGRectMake(kScreenWidth-50, KStatusHeight+5, 40, 32)];
+    self.rightBtn=[[UIButton alloc] initWithFrame:CGRectMake(kScreenWidth-40, KStatusHeight+10, 35, 32)];
     [self.rightBtn addTarget:self action:@selector(rightNavigationItemAction) forControlEvents:UIControlEventTouchUpInside];
     [navView addSubview:self.rightBtn];
     
@@ -136,6 +137,17 @@
     [alertController addAction:photoAction];
     
     [self presentViewController:alertController animated:YES completion:nil];
+}
+
+#pragma mark 跳转处理
+-(void)pushTagetViewController:(BaseViewController *)controller{
+    [self.navigationController pushViewController:controller animated:YES];
+    
+    //当我们push成功之后，关闭我们的抽屉
+    [self.mm_drawerController closeDrawerAnimated:YES completion:^(BOOL finished) {
+        //设置打开抽屉模式为MMOpenDrawerGestureModeNone，也就是没有任何效果。
+        [self.mm_drawerController setOpenDrawerGestureModeMask:MMOpenDrawerGestureModeNone];
+    }];
 }
 
 

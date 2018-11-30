@@ -55,7 +55,7 @@
 }
 
 +(UIColor *)bgColor_Gray{
-    return [UIColor colorWithHex:0xf5f5f5 alpha:1.0];
+   return [UIColor colorWithHex:0xf1f1f2 alpha:1.0];
 }
 
 @end

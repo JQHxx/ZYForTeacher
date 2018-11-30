@@ -8,10 +8,14 @@
 
 #import "RegisterViewController.h"
 #import "IdentitySettingViewController.h"
-
+#import "BaseWebViewController.h"
 #import "LoginTextView.h"
 #import "LoginButton.h"
 #import "UserAgreementView.h"
+#import "SSKeychain.h"
+#import "UIDevice+Extend.h"
+#import <NIMSDK/NIMSDK.h>
+#import <UMPush/UMessage.h>
 
 @interface RegisterViewController ()<UITextFieldDelegate>
 
@@ -21,8 +25,9 @@
 @property (nonatomic, strong) LoginTextView      *securityCodeTextView;       //验证码
 @property (nonatomic, strong) LoginTextView      *passwordTextView;           //密码
 @property (nonatomic, strong) LoginTextView      *confirmPwdTextView;         //确认密码
-@property (nonatomic, strong) LoginButton        *registerButton;             //注册
-
+@property (nonatomic, strong) UIButton           *registerButton;             //注册
+@property (nonatomic, strong) UserAgreementView  *agreementView;              //用户协议
+@property (nonatomic, strong) UIButton           *selButton;
 
 
 @end
@@ -40,20 +45,28 @@
 #pragma mark -- Event response
 #pragma mark 注册
 -(void)registerAction{
-    /*
-    if (kIsEmptyString(self.phoneTextView.myText.text)) {
+    NSString *phoneStr = self.phoneTextView.myText.text;
+    
+    NSString *codeStr = self.securityCodeTextView.myText.text;
+    
+    if (kIsEmptyString(phoneStr)) {
         [self.view makeToast:@"手机号不能为空" duration:1.0 position:CSToastPositionCenter];
         return;
     }
     
-    BOOL isPhoneNumber = [self.phoneTextView.myText.text isPhoneNumber];
+    BOOL isPhoneNumber = [phoneStr isPhoneNumber];
     if (!isPhoneNumber) {
         [self.view makeToast:@"您输入的手机号码有误,请重新输入" duration:1.0 position:CSToastPositionCenter];
         return;
     }
     
-    if (kIsEmptyString(self.securityCodeTextView.myText.text)) {
+    if (kIsEmptyString(codeStr)) {
         [self.view makeToast:@"验证码不能为空" duration:1.0 position:CSToastPositionCenter];
+        return;
+    }
+    
+    if (kIsEmptyString(self.passwordTextView.myText.text)||kIsEmptyString(self.confirmPwdTextView.myText.text)) {
+        [self.view makeToast:@"密码不能为空" duration:1.0 position:CSToastPositionCenter];
         return;
     }
     
@@ -66,10 +79,73 @@
         [self.view makeToast:@"两次输入的密码不相同" duration:1.0 position:CSToastPositionCenter];
         return;
     }
-     */
+ 
+    NSString *retrieveuuid=[SSKeychain passwordForService:kDeviceIDFV account:@"useridfv"];
+    NSString *uuid=nil;
+    if (kIsEmptyObject(retrieveuuid)) {
+        uuid=[UIDevice getIDFV];
+        [SSKeychain setPassword:uuid forService:kDeviceIDFV account:@"useridfv"];
+    }else{
+        uuid=retrieveuuid;
+    }
     
-    IdentitySettingViewController *setUserInfoVC = [[IdentitySettingViewController alloc] init];
-    [self.navigationController pushViewController:setUserInfoVC animated:YES];
+    NSString *passwordStr = [self.passwordTextView.myText.text MD5];
+    
+    kSelfWeak;
+    NSString *body = [NSString stringWithFormat:@"mobile=%@&password=%@&code=%@&platform=iOS&deviceId=%@",phoneStr,passwordStr,codeStr,uuid];
+    [TCHttpRequest postMethodWithURL:kRegisterAPI body:body success:^(id json) {
+        NSDictionary *data = [json objectForKey:@"data"];
+        UserModel *model = [[UserModel alloc] init];
+        
+        [NSUserDefaultsInfos putKey:kLoginPhone andValue:phoneStr];
+        [NSUserDefaultsInfos putKey:kUserID andValue:data[@"tid"]];
+        [NSUserDefaultsInfos putKey:kUserToken andValue:data[@"token"]];
+        [NSUserDefaultsInfos putKey:kIsOnline andValue:[NSNumber numberWithBool:NO]];
+        [NSUserDefaultsInfos putKey:kUserThirdID andValue:model.third_id];
+        [NSUserDefaultsInfos putKey:kUserThirdToken andValue:model.third_token];
+        [NSUserDefaultsInfos putKey:kLogID andValue:model.logid];
+        [NSUserDefaultsInfos putKey:kAuthIdentidy andValue:model.auth_id];   //实名认证
+        [NSUserDefaultsInfos putKey:kAuthEducation andValue:model.auth_edu];  //学历认证
+        
+        
+        model.tid = data[@"tid"];
+        model.token = data[@"token"];
+        
+        if (!kIsEmptyString(model.trait)&&!kIsEmptyString(model.tch_name)&!kIsEmptyString(model.subject)) {
+            NSMutableDictionary *userDict = [[NSMutableDictionary alloc] initWithObjectsAndKeys:model.tid,@"tch_id",model.trait,@"trait",model.tch_name,@"tch_name",model.grade,@"grade",model.subject,@"subject",model.score,@"score",model.guide_price,@"guide_price",model.guide_time,@"guide_time",model.check_num,@"check_num",nil];
+            [NSUserDefaultsInfos putKey:kUserInfo anddict:userDict];
+        }
+        //登录网易云
+        [[[NIMSDK sharedSDK] loginManager] login:model.third_id token:model.third_token completion:^(NSError * _Nullable error) {
+            if (error) {
+                MyLog(@"NIMSDK login--error:%@",error.localizedDescription);
+            }else{
+                MyLog(@"网易云登录成功");
+                NIMUser *user = [[NIMSDK sharedSDK].userManager userInfo:model.third_id];
+                MyLog(@"user--nickName:%@,avatar:%@",user.userInfo.nickName,user.userInfo.thumbAvatarUrl);
+            }
+        }];
+        //绑定友盟推送别名
+        NSString *tempStr=isTrueEnvironment?@"zs":@"cs";
+        NSString *aliasStr=[NSString stringWithFormat:@"%@%@",tempStr,data[@"tid"]];
+        [UMessage setAlias:aliasStr type:kUMAlaisType response:^(id  _Nullable responseObject, NSError * _Nullable error) {
+            if (error) {
+                MyLog(@"绑定别名失败，error:%@",error.localizedDescription);
+            }else{
+                MyLog(@"绑定别名成功,result:%@",responseObject);
+            }
+        }];
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf.view makeToast:@"注册成功" duration:1.0 position:CSToastPositionCenter];
+        });
+        
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5*NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            IdentitySettingViewController *setUserInfoVC = [[IdentitySettingViewController alloc] init];
+            setUserInfoVC.model = model;
+            [weakSelf.navigationController pushViewController:setUserInfoVC animated:YES];
+        });
+    }];
 }
 
 #pragma mark 获取验证码
@@ -84,33 +160,41 @@
         return;
     }
     
-    __block int timeout=60; //倒计时时间
-    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-    dispatch_source_t _timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0,queue);
-    dispatch_source_set_timer(_timer,dispatch_walltime(NULL, 0),1.0*NSEC_PER_SEC, 0); //每秒执行
-    dispatch_source_set_event_handler(_timer, ^{
-        if(timeout<=0){ //倒计时结束，关闭
-            dispatch_source_cancel(_timer);
-            dispatch_async(dispatch_get_main_queue(), ^{
-                //设置界面的按钮显示 根据自己需求设置
-                [self.getCodeButton setTitle:@"获取验证码" forState:UIControlStateNormal];
-                [self.getCodeButton setTitleColor:[UIColor colorWithHexString:@"#FF7568"] forState:UIControlStateNormal];
-                self.getCodeButton.userInteractionEnabled = YES;
-            });
-        }else{
-            int seconds = timeout % 61;
-            NSString *strTime = [NSString stringWithFormat:@"%.2d", seconds];
-            dispatch_async(dispatch_get_main_queue(), ^{
-                //设置界面的按钮显示 根据自己需求设置
-                [self.getCodeButton setTitle:[NSString stringWithFormat:@"%@s",strTime] forState:UIControlStateNormal];
-                self.getCodeButton.userInteractionEnabled = NO;
-            });
-            timeout--;
-        }
-    });
-    dispatch_resume(_timer);
-    
-    [self.view makeToast:@"验证码已发送" duration:1.0 position:CSToastPositionCenter];
+    kSelfWeak;
+    NSString *phoneStr = self.phoneTextView.myText.text;
+    NSString *body = [NSString stringWithFormat:@"mobile=%@&cate=register",phoneStr];
+    [TCHttpRequest postMethodWithURL:kGetCodeSign body:body success:^(id json) {
+        __block int timeout=60; //倒计时时间
+        dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+        dispatch_source_t _timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0,queue);
+        dispatch_source_set_timer(_timer,dispatch_walltime(NULL, 0),1.0*NSEC_PER_SEC, 0); //每秒执行
+        dispatch_source_set_event_handler(_timer, ^{
+            if(timeout<=0){ //倒计时结束，关闭
+                dispatch_source_cancel(_timer);
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    //设置界面的按钮显示 根据自己需求设置
+                    [self.getCodeButton setTitle:@"获取验证码" forState:UIControlStateNormal];
+                    [self.getCodeButton setTitleColor:[UIColor colorWithHexString:@"#FF7568"] forState:UIControlStateNormal];
+                    self.getCodeButton.userInteractionEnabled = YES;
+                });
+            }else{
+                int seconds = timeout % 61;
+                NSString *strTime = [NSString stringWithFormat:@"%.2d", seconds];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    //设置界面的按钮显示 根据自己需求设置
+                    [self.getCodeButton setTitle:[NSString stringWithFormat:@"%@s",strTime] forState:UIControlStateNormal];
+                    self.getCodeButton.userInteractionEnabled = NO;
+                });
+                timeout--;
+            }
+        });
+        dispatch_resume(_timer);
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            [weakSelf.phoneTextView.myText resignFirstResponder];
+            [weakSelf.securityCodeTextView.myText becomeFirstResponder];
+            [weakSelf.view makeToast:@"验证码发送成功" duration:1.0 position:CSToastPositionCenter];
+        });
+    }];
 }
 
 #pragma mark 密码是否可见
@@ -120,6 +204,19 @@
         self.passwordTextView.myText.secureTextEntry=!sender.selected;
     }else{
         self.confirmPwdTextView.myText.secureTextEntry=!sender.selected;
+    }
+}
+
+#pragma mark 是否已阅读
+-(void)chooseForDidReadUserAgreement:(UIButton *)sender{
+    sender.selected = !sender.selected;
+    
+    if(sender.selected){
+        [self.registerButton setBackgroundImage:[UIImage imageNamed:@"login_bg_btn"] forState:UIControlStateNormal];
+        self.registerButton.userInteractionEnabled = YES;
+    }else{
+        [self.registerButton setBackgroundImage:[UIImage imageNamed:@"button_gray"] forState:UIControlStateNormal];
+        self.registerButton.userInteractionEnabled = NO;
     }
 }
 
@@ -161,7 +258,6 @@
 #pragma mark -- Pravite Methods
 #pragma mark 初始化界面
 -(void)initRegisterView{
-    
     [self.view addSubview:self.titleLabel];
     [self.view addSubview:self.phoneTextView];
     [self.view addSubview:self.securityCodeTextView];
@@ -183,8 +279,10 @@
         [self.view addSubview:visibleButton];
     }
     
-    
     [self.view addSubview:self.registerButton];
+    [self.view addSubview:self.selButton];
+    [self.view addSubview:self.agreementView];
+    
 }
 
 #pragma mark -- Getters
@@ -235,7 +333,7 @@
 #pragma mark 密码
 -(LoginTextView *)passwordTextView{
     if (!_passwordTextView) {
-        _passwordTextView = [[LoginTextView alloc] initWithFrame:CGRectMake(26.0, self.securityCodeTextView.bottom+10, kScreenWidth - 51.0, 52.0) placeholder:@"请输入6-14位字母数字组合密码" icon:@"register_password" isNumber:NO];
+        _passwordTextView = [[LoginTextView alloc] initWithFrame:CGRectMake(26.0, self.securityCodeTextView.bottom+10, kScreenWidth - 51.0, 52.0) placeholder:@"请输入密码" icon:@"register_password" isNumber:NO];
         _passwordTextView.myText.delegate = self;
         _passwordTextView.myText.secureTextEntry = YES;
         _passwordTextView.myText.keyboardType = UIKeyboardTypeASCIICapable;
@@ -254,11 +352,43 @@
     return _confirmPwdTextView;
 }
 
+#pragma mark 选择是否同意
+-(UIButton *)selButton{
+    if (!_selButton) {
+        _selButton = [[UIButton alloc] initWithFrame:CGRectMake((kScreenWidth-220)/2.0, self.confirmPwdTextView.bottom+40.0, 16, 16)];
+        [_selButton setImage:[UIImage imageNamed:@"login_agreement"] forState:UIControlStateNormal];
+        [_selButton setImage:[UIImage imageNamed:@"login_agreement_agree"] forState:UIControlStateSelected];
+        [_selButton addTarget:self action:@selector(chooseForDidReadUserAgreement:) forControlEvents:UIControlEventTouchUpInside];
+        _selButton.selected = YES;
+    }
+    return _selButton;
+}
+
+#pragma mark 用户协议
+-(UserAgreementView *)agreementView{
+    if (!_agreementView) {
+        NSString * tempStr = @"我已阅读并同意《用户服务协议》";
+        CGFloat labW = [tempStr boundingRectWithSize:CGSizeMake(kScreenWidth, 20) withTextFont:[UIFont pingFangSCWithWeight:FontWeightStyleRegular size:12]].width;
+        _agreementView = [[UserAgreementView alloc] initWithFrame:CGRectMake(self.selButton.right+5,self.confirmPwdTextView.bottom +38, labW+40, 20) string:tempStr];
+        kSelfWeak;
+        _agreementView.clickAction = ^{
+            BaseWebViewController *userAgreementVC = [[BaseWebViewController alloc] init];
+            userAgreementVC.webTitle = @"用户服务协议";
+            userAgreementVC.urlStr = kUserAgreementURL;
+            [weakSelf.navigationController pushViewController:userAgreementVC animated:YES];
+        };
+    }
+    return _agreementView;
+}
 
 #pragma mark 注册
--(LoginButton *)registerButton{
+-(UIButton *)registerButton{
     if (!_registerButton) {
-        _registerButton = [[LoginButton alloc] initWithFrame:CGRectMake(48.0, self.confirmPwdTextView.bottom+37.0, kScreenWidth-95.0, (kScreenWidth-95.0)*(128.0/588.0)) title:@"注册"];
+        _registerButton = [[UIButton alloc] initWithFrame:CGRectMake((kScreenWidth-280)/2.0, self.agreementView.bottom+13.0, 280, 55)];
+        [_registerButton setBackgroundImage:[UIImage imageNamed:@"login_bg_btn"] forState:UIControlStateNormal];
+        [_registerButton setTitle:@"注册" forState:UIControlStateNormal];
+        [_registerButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        _registerButton.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:16];
         [_registerButton addTarget:self action:@selector(registerAction) forControlEvents:UIControlEventTouchUpInside];
     }
     return _registerButton;

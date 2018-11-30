@@ -12,6 +12,7 @@
 
 @interface IdentitySettingViewController (){
     UIButton   *selectedButton;
+    NSInteger   type; //1老师 2大学生
 }
 
 @property (nonatomic, strong) UILabel            *titleLabel;     //标题
@@ -25,6 +26,7 @@
     [super viewDidLoad];
     
     self.isHiddenShaw = YES;
+    type = 1;
     
     [self initIdentitySettingView];
 }
@@ -34,14 +36,22 @@
     selectedButton.selected=NO;
     sender.selected=YES;
     selectedButton=sender;
+    type = sender.tag+1;
 }
 
 #pragma mark 确定身份选择
 -(void)confirmIdentitySettingAction{
-    UserInfoViewController *userInfoVC = [[UserInfoViewController alloc] init];
-    userInfoVC.identityType = selectedButton.tag;
-    userInfoVC.isLoginIn = YES;
-    [self.navigationController pushViewController:userInfoVC animated:YES];
+    NSString *body = [NSString stringWithFormat:@"token=%@&label=%ld",self.model.token,type];
+    kSelfWeak;
+    [TCHttpRequest postMethodWithURL:kSetUserInfoAPI body:body success:^(id json) {
+        weakSelf.model.tch_label = [NSNumber numberWithInteger:type];
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            UserInfoViewController *userInfoVC = [[UserInfoViewController alloc] init];
+            userInfoVC.userModel = weakSelf.model;
+            userInfoVC.isLoginIn = YES;
+            [self.navigationController pushViewController:userInfoVC animated:YES];
+        });
+    }];
 }
 
 #pragma mark -- Private Methods
@@ -52,14 +62,14 @@
     NSArray *titles = @[@"我是老师",@"我是大学生"];
     NSArray *images = @[@"identity_teacher",@"identity_undergraduate"];
 
-    CGFloat imgCapWidth = kScreenWidth-96-240;
-    CGFloat btnCapWidth = kScreenWidth-128-220;
+    CGFloat btnCapWidth =24.0;
+    CGFloat imgCapWidth = (kScreenWidth-240-btnCapWidth)/2.0;
     for (NSInteger i=0; i<2; i++) {
-        UIImageView *imgView = [[UIImageView alloc] initWithFrame:CGRectMake(48+(120+imgCapWidth)*i,self.titleLabel.bottom+53, 120, 136)];
+        UIImageView *imgView = [[UIImageView alloc] initWithFrame:CGRectMake(imgCapWidth+(120+btnCapWidth)*i,self.titleLabel.bottom+53, 120, 136)];
         imgView.image = [UIImage imageNamed:images[i]];
         [self.view addSubview:imgView];
         
-        UIButton *btn = [[UIButton alloc] initWithFrame:CGRectMake(64+(110+btnCapWidth)*i, imgView.bottom+15, 110, 30)];
+        UIButton *btn = [[UIButton alloc] initWithFrame:CGRectMake(imgCapWidth+10+(110+btnCapWidth)*i, imgView.bottom+15, 110, 30)];
         [btn setTitle:titles[i] forState:UIControlStateNormal];
         [btn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
         [btn setTitleColor:[UIColor redColor] forState:UIControlStateSelected];

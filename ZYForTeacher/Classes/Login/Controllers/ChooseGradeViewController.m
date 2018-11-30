@@ -38,7 +38,7 @@
 }
 
 -(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section{
-    return @"*可以选多个年级";
+    return @"*最多可以选两个年级";
 }
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -75,6 +75,10 @@
         cell.isSelected = NO;
         [self.selectedIndexPaths removeObject:indexPath];
     }else {
+        if (self.selectedIndexPaths.count>1) {
+            [self.view makeToast:@"您最多只能选择两个年级" duration:1.0 position:CSToastPositionCenter];
+            return;
+        }
         cell.isSelected = YES;
         [self.selectedIndexPaths addObject:indexPath];
     }
@@ -95,12 +99,11 @@
         NSString *gradeStr = self.gradesArray[indexPath.row];
         [tempGradesArr addObject:gradeStr];
     }
-    NSString *gradeValueStr = [tempGradesArr componentsJoinedByString:@","];
 
-    if (!kIsEmptyString(gradeValueStr)) {
+    if (tempGradesArr.count>0) {
         [self.navigationController popViewControllerAnimated:YES];
         if (self.getGradeBlock) {
-            self.getGradeBlock(gradeValueStr);
+            self.getGradeBlock(tempGradesArr);
         }
     }else{
         [self.view makeToast:@"请选择年级" duration:1.0 position:CSToastPositionCenter];

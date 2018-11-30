@@ -24,47 +24,48 @@
 -(instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier{
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
     if (self) {
-        billImageView = [[UIImageView alloc] initWithFrame:CGRectMake(10, 10, 50, 50)];
+        billImageView = [[UIImageView alloc] initWithFrame:CGRectMake(17, 17, 34, 34)];
         [self.contentView addSubview:billImageView];
         
-        typeLabel = [[UILabel alloc] initWithFrame:CGRectMake(billImageView.right+10, 10, 100, 25)];
-        typeLabel.textColor = [UIColor blackColor];
-        typeLabel.font = kFontWithSize(14);
+        typeLabel = [[UILabel alloc] initWithFrame:CGRectMake(billImageView.right+13, 13, 100, 21)];
+        typeLabel.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
+        typeLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:15];
         [self.contentView addSubview:typeLabel];
         
-        timeLabel = [[UILabel alloc] initWithFrame:CGRectMake(billImageView.right+10, typeLabel.bottom, 110, 30)];
-        timeLabel.font = kFontWithSize(12);
-        timeLabel.textColor = [UIColor lightGrayColor];
+        timeLabel = [[UILabel alloc] initWithFrame:CGRectMake(billImageView.right+15, typeLabel.bottom, 110, 20)];
+        timeLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:13];
+        timeLabel.textColor = [UIColor colorWithHexString:@"#9B9B9B"];
         [self.contentView addSubview:timeLabel];
         
-        amountLabel = [[UILabel alloc] initWithFrame:CGRectMake(kScreenWidth-120, 20, 110, 30)];
+        amountLabel = [[UILabel alloc] initWithFrame:CGRectMake(kScreenWidth-128, 21, 110, 25)];
         amountLabel.textAlignment = NSTextAlignmentRight;
-        amountLabel.font = kFontWithSize(14);
+        amountLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:18];
         [self.contentView addSubview:amountLabel];
     }
     return self;
 }
 
 -(void)setMyBill:(BillModel *)myBill{
-    billImageView.image = [UIImage imageNamed:@"ic_m_head"];
-    
     NSString *tempStr = nil;
-    if (myBill.bill_type==0) {
-        typeLabel.text = @"提现";
-        amountLabel.textColor = [UIColor greenColor];
-        tempStr = @"-";
-    }else if (myBill.bill_type==1){
+    if ([myBill.label integerValue]==1) {
+        billImageView.image = [UIImage imageNamed:@"bill_inspect"];
         typeLabel.text = @"作业检查";
-        amountLabel.textColor = [UIColor redColor];
+        amountLabel.textColor = [UIColor colorWithHexString:@"#FF6161"];
+        tempStr = @"+";
+    }else if ([myBill.label integerValue]==2){
+        billImageView.image = [UIImage imageNamed:@"bill_coach"];
+        typeLabel.text = @"作业辅导";
+        amountLabel.textColor = [UIColor colorWithHexString:@"#FF6161"];
         tempStr = @"+";
     }else{
-        typeLabel.text = @"作业辅导";
-        amountLabel.textColor = [UIColor redColor];
-        tempStr = @"+";
+        billImageView.image = [UIImage imageNamed:@"bill_recharge"];
+        typeLabel.text = @"提现";
+        amountLabel.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
+        tempStr = @"-";
     }
     
-    timeLabel.text = myBill.create_time;
-    amountLabel.text = [tempStr stringByAppendingString:[NSString stringWithFormat:@"¥%.2f",myBill.amount]];
+    timeLabel.text = [[ZYHelper sharedZYHelper] timeWithTimeIntervalNumber:myBill.income_time format:@"MM月dd日 HH:mm"];
+    amountLabel.text = [tempStr stringByAppendingString:[NSString stringWithFormat:@"¥%.2f",[myBill.income doubleValue]]];
 }
 
 - (void)awakeFromNib {

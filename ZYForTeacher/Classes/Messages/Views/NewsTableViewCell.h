@@ -8,13 +8,13 @@
 
 
 #import <UIKit/UIKit.h>
-#import "SystemNewsModel.h"
+#import "MessageModel.h"
 
 
 @interface NewsTableViewCell : UITableViewCell
 
-@property (nonatomic,strong)SystemNewsModel  *model;
+@property (nonatomic,strong)MessageModel  *model;
 
-+(CGFloat)getCellHeightWithNews:(SystemNewsModel *)model;
++(CGFloat)getCellHeightWithNews:(MessageModel *)model;
 
 @end

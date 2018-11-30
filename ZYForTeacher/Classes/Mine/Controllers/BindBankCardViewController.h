@@ -7,10 +7,10 @@
 //
 
 #import "BaseViewController.h"
+#import "BankModel.h"
 
 @interface BindBankCardViewController : BaseViewController
 
-@property (nonatomic , copy ) NSString *cardholder;
-@property (nonatomic , copy ) NSString *bankCardNumber;
+@property (nonatomic , strong) BankModel *bank;
 
 @end

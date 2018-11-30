@@ -410,4 +410,10 @@
     return platform;
 }
 
++(BOOL)isWifi{
+    Reachability *reach = [Reachability reachabilityWithHostname:@"www.baidu.com"];
+    NetworkStatus type = [reach currentReachabilityStatus];
+    return type == ReachableViaWiFi;
+}
+
 @end

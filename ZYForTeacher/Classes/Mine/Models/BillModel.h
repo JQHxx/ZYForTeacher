@@ -10,9 +10,16 @@
 
 @interface BillModel : NSObject
 
-@property (nonatomic ,assign )  NSInteger  bill_type;      //0、提现 1、作业检查 2、作业辅导
-@property (nonatomic , copy )   NSString   *create_time;   //交易时间
-@property (nonatomic ,assign )  double     amount;         //金额
-@property (nonatomic , copy )   NSString   *order_sn;      //交易单号
+@property (nonatomic ,strong)  NSNumber    *label;           //交易类型
+@property (nonatomic ,strong)  NSNumber    *income_time;    //交易时间
+@property (nonatomic ,strong)  NSNumber    *income;           //金额
+@property (nonatomic , copy )  NSString    *income_no;      //交易单号
+@property (nonatomic ,strong)  NSNumber    *status;   //交易状态
+
+@property (nonatomic ,strong)  NSString    *extract_no;       //交易单号
+@property (nonatomic ,strong)  NSNumber    *extract_status;   //交易状态
+@property (nonatomic , copy )  NSString    *bank;             //银行
+@property (nonatomic , copy )  NSString    *card;             //银行卡号
+@property (nonatomic , copy )  NSString    *realname;         //持卡人
 
 @end

@@ -11,6 +11,7 @@
 
 @interface OrderDetailsViewController : BaseViewController
 
-@property (nonatomic , strong) OrderModel *orderModel;
+@property (nonatomic ,  copy ) NSString   *orderId;
+@property (nonatomic , assign) BOOL       isNotifyIn;  //推送消息点击进入
 
 @end

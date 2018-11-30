@@ -10,4 +10,6 @@
 
 @interface WithdrawViewController : BaseViewController
 
+@property (nonatomic ,assign) double amount;
+
 @end

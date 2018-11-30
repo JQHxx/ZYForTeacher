@@ -15,10 +15,12 @@
     if (self) {
         self.layer.doubleSided = NO;
         
-        self.coverImgView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 20, 200, 260)];
-        self.coverImgView.backgroundColor = [UIColor lightGrayColor];
+        self.coverImgView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 227, 340)];
+        self.coverImgView.contentMode = UIViewContentModeScaleAspectFill;
+        self.coverImgView.clipsToBounds = YES;
+        self.coverImgView.userInteractionEnabled = YES;
         [self.contentView addSubview:self.coverImgView];
-        
+
     }
     return self;
 }

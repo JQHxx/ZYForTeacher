@@ -10,6 +10,8 @@
 
 @interface PhotosView : UIView
 
+-(instancetype)initWithFrame:(CGRect)frame bgColor:(UIColor *)bgColor;
+
 @property (nonatomic, strong) NSMutableArray      *photosArray;
 
 @end

@@ -8,6 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
+
 typedef void(^BaseReturnBackBlock)(id object);
 
 @interface BaseViewController : UIViewController
@@ -31,7 +32,8 @@ typedef void(^BaseReturnBackBlock)(id object);
 
 -(void)leftNavigationItemAction;
 -(void)rightNavigationItemAction;
-
 -(void)addPhoto;
+//跳转处理
+-(void)pushTagetViewController:(BaseViewController *)controller;
 
 @end

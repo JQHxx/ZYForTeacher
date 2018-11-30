@@ -9,9 +9,8 @@
 #import "LabelsView.h"
 
 #define kItemH    30
-#define kMargin      10  //按钮之间的间距
-#define kGapping     10  //距离边缘的距离
-#define kTitleWidth  60
+#define kMargin      20  //按钮之间的间距
+#define kGapping     20  //距离边缘的距离
 
 @interface LabelsView(){
     UIButton  *selectItem;
@@ -37,21 +36,21 @@
         //设置文字的宽度
         NSString *titleStr = self.labelsArray[i];
         
-        item.width = [titleStr boundingRectWithSize:CGSizeMake(CGFLOAT_MAX, kItemH) withTextFont:kFontWithSize(16)].width + 10;
+        item.width = [titleStr boundingRectWithSize:CGSizeMake(CGFLOAT_MAX, kItemH) withTextFont:[UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16]].width + 15;
         item.height = kItemH;
         if (i == 0) {  //第一个的时候放心大胆的布局，并记录下上一个button的位置
-            if(item.width >kScreenWidth - 2*kGapping -kTitleWidth){  //单行文字超过一行处理
-                item.width = kScreenWidth -2*kGapping-kTitleWidth;
+            if(item.width >kScreenWidth - 2*kGapping){  //单行文字超过一行处理
+                item.width = kScreenWidth -2*kGapping;
             }
             item.x = kGapping;
             item.y = 0;
             lastBtn =item;
         }else{  //依据上一个button来布局
-            if (lastBtn.right+item.width+kMargin+kTitleWidth>kScreenWidth) { //不足以再摆一行了
+            if (lastBtn.right+item.width+kMargin>kScreenWidth) { //不足以再摆一行了
                 item.y = lastBtn.bottom+kMargin;
                 item.x = kGapping;
-                if(item.width >kScreenWidth - 2*kGapping-kTitleWidth){  //单行文字超过一行处理
-                    item.width = kScreenWidth -2*kGapping-kTitleWidth;
+                if(item.width >kScreenWidth - 2*kGapping){  //单行文字超过一行处理
+                    item.width = kScreenWidth -2*kGapping;
                 }
             }else{  //还能在摆同一行
                 item.y = lastBtn.y;
@@ -73,11 +72,11 @@
 -(void)itemClickAction:(UIButton *)sender{
     if (selectItem) {
         selectItem.selected = NO;
-        selectItem.layer.borderColor = [kLineColor CGColor];
+        selectItem.layer.borderColor = [[UIColor colorWithHexString:@"#4A4A4A"] CGColor];
     }
     
     sender.selected = YES;
-    sender.layer.borderColor = [UIColor redColor].CGColor;
+    sender.layer.borderColor = [UIColor colorWithHexString:@"#FF6161"].CGColor;
     selectItem = sender;
     
     self.didClickItem(sender.tag);
@@ -94,15 +93,15 @@
     
     for (int i = 0; i < labelsArray.count; i ++) {
         UIButton *item = [[UIButton alloc] init];
-        item.titleLabel.font = [UIFont systemFontOfSize:16.0f];
-        [item setTitleColor:[UIColor colorWithHexString:@"#333333"] forState:UIControlStateNormal];
-        [item setTitleColor:[UIColor redColor] forState:UIControlStateSelected];
-        item.layer.cornerRadius = 1.0;
+        [item setTitleColor:[UIColor colorWithHexString:@"#4A4A4A"] forState:UIControlStateNormal];
+        [item setTitleColor:[UIColor colorWithHexString:@"#FF6161"] forState:UIControlStateSelected];
+        item.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+        item.layer.cornerRadius = 4.0;
         item.clipsToBounds = YES;
         item.layer.borderWidth = 0.5;
-        item.layer.borderColor = [kLineColor CGColor] ;
+        item.layer.borderColor = [[UIColor colorWithHexString:@"#4A4A4A"] CGColor] ;
         item.tag = i;
-        if (i==0) {
+        if (i==_selectedIndex) {
             item.selected = YES;
             item.layer.borderColor = [UIColor redColor].CGColor;
             selectItem = item;

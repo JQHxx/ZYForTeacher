@@ -10,4 +10,6 @@
 
 @interface FilterViewController : BaseViewController
 
+@property (nonatomic,assign)NSInteger transactionType;
+
 @end

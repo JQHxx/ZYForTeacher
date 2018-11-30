@@ -8,7 +8,7 @@
 
 #import "BaseViewController.h"
 
-typedef void(^GetGradeValueBlock)(NSString *gradeStr);
+typedef void(^GetGradeValueBlock)(NSMutableArray *gradesArr);
 
 @interface ChooseGradeViewController : BaseViewController
 

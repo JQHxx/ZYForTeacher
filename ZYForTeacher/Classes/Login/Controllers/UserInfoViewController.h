@@ -7,10 +7,11 @@
 //
 
 #import "BaseViewController.h"
+#import "UserModel.h"
 
 @interface UserInfoViewController : BaseViewController
 
-@property (nonatomic, assign) NSInteger identityType;
-@property (nonatomic, assign) BOOL   isLoginIn;
+@property (nonatomic, assign) BOOL      isLoginIn;
+@property (nonatomic, strong) UserModel *userModel;
 
 @end

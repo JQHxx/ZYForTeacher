@@ -58,6 +58,23 @@
  *  @return 修改后的Image
  */
 - (UIImage *)cropImageWithSize:(CGSize)size;
+
+/*
+ *压缩图片大小
+ *1）宽高均大于1280，取较大值等于1280，较大值等比例压缩
+ *2）宽或高一个大于1280，取较大的等于1280，较小的等比压缩
+ * 3）宽高均小于1280，压缩比例不变
+ */
++(UIImage *)zipScaleWithImage:(UIImage *)sourceImage;
+
+/*
+ *压缩图片质量
+ *1）图片大于1M的，将压缩系数调整到0.7
+ *2）图片在0.5M<image<1M,将压缩系数调整到0.8
+ *3）图片小雨0.5M，压缩系数可以写0.9或者1
+ */
++(NSData *)zipNSDataWithImage:(UIImage *)sourceImage;
+
 /**
  *  根据指定压缩宽度,生成等比压缩后的图片
  *
@@ -79,6 +96,11 @@
  * 图片绘制圆角
  */
 - (UIImage *)imageWithCornerRadius:(CGFloat)radius;
+
+/*
+ *截图
+ */
++(UIImage *)snapshotForView:(UIView *)view;
 
 
 @end

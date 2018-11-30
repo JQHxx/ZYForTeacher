@@ -7,9 +7,11 @@
 //
 
 #import "BaseViewController.h"
+#import "UserModel.h"
 
 @interface TeachInfoViewController : BaseViewController
 
 @property (nonatomic ,assign ) BOOL isLoginIn;
+@property (nonatomic ,strong ) UserModel  *user;
 
 @end

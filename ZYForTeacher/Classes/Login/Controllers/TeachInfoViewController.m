@@ -11,9 +11,8 @@
 #import "MainViewController.h"
 #import "BaseNavigationController.h"
 #import "ChooseGradeViewController.h"
-#import "TeachModel.h"
 #import "BRPickerView.h"
-#import "AppDelegate+Extension.h"
+#import "AppDelegate.h"
 #import "LoginButton.h"
 
 @interface TeachInfoViewController ()<UITableViewDelegate,UITableViewDataSource>{
@@ -25,8 +24,6 @@
 @property (nonatomic ,strong) UITableView        *teachInfoTableView;
 @property (nonatomic, strong) LoginButton        *completeButton;       //确定
 
-@property (nonatomic ,strong) TeachModel *teachInfo;
-
 @end
 
 @implementation TeachInfoViewController
@@ -35,6 +32,10 @@
     [super viewDidLoad];
  
     self.isHiddenShaw = YES;
+    
+    if (self.user&&[self.user.edu_stage integerValue]>0) {
+        lastStage = [self.user.edu_stage integerValue]==1?@"小学":@"初中";
+    }
     
     teachTitlesArray = @[@"教学经验",@"教授阶段",@"授课年级",@"教学科目"];
     [self.view addSubview:self.titleLabel];
@@ -55,13 +56,17 @@
     cell.textLabel.text = teachTitlesArray[indexPath.row];
     cell.detailTextLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
     if (indexPath.row == 0) {
-        cell.detailTextLabel.text = self.teachInfo.teach;
+        cell.detailTextLabel.text = [self.user.edu_exp integerValue]>0?[NSString stringWithFormat:@"%@年",self.user.edu_exp]:@"";
     }else if (indexPath.row == 1){
-        cell.detailTextLabel.text = self.teachInfo.teach_stage;
+        if ([self.user.edu_stage integerValue]>0) {
+            cell.detailTextLabel.text = [self.user.edu_stage integerValue]==1?@"小学":@"初中";
+        }
     }else if (indexPath.row == 2){
-        cell.detailTextLabel.text = self.teachInfo.grade;
+        if (self.user.grade.count>0) {
+            cell.detailTextLabel.text = [self.user.grade componentsJoinedByString:@","];
+        }
     }else{
-        cell.detailTextLabel.text = self.teachInfo.subject;
+        cell.detailTextLabel.text = kIsEmptyString(self.user.subject)?@"":self.user.subject;
     }
     return cell;
 }
@@ -72,13 +77,13 @@
     }else if (indexPath.row == 1){
         [self setTeachingStage];
     }else if (indexPath.row == 2){
-        if (kIsEmptyObject(self.teachInfo.teach_stage)) {
+        if ([self.user.edu_stage integerValue]==0) {
             [self.view makeToast:@"请先设置教授阶段" duration:1.0 position:CSToastPositionCenter];
         }else{
             [self setTeachingGrade];
         }
     }else{
-        if (kIsEmptyObject(self.teachInfo.teach_stage)) {
+        if ([self.user.edu_stage integerValue]==0) {
             [self.view makeToast:@"请先设置教授阶段" duration:1.0 position:CSToastPositionCenter];
         }else{
             [self setTeachingSubjects];
@@ -94,13 +99,16 @@
 #pragma mark 教学经验
 -(void)setTeachingExperience{
     NSMutableArray *experienceArr = [[NSMutableArray alloc] init];
-    for (NSInteger i=0; i<20; i++) {
+    for (NSInteger i=0; i<30; i++) {
         NSString *str = [NSString stringWithFormat:@"%ld年",i+1];
         [experienceArr addObject:str];
     }
+    NSString *defaultExp = [self.user.edu_exp integerValue]>0?[NSString stringWithFormat:@"%@年",self.user.edu_exp]:@"1年";
     kSelfWeak;
-    [BRStringPickerView showStringPickerWithTitle:@"教学经验" dataSource:experienceArr defaultSelValue:self.teachInfo.teach isAutoSelect:NO resultBlock:^(id selectValue) {
-        weakSelf.teachInfo.teach = selectValue;
+    [BRStringPickerView showStringPickerWithTitle:@"教学经验" dataSource:experienceArr defaultSelValue:defaultExp  isAutoSelect:NO resultBlock:^(id selectValue) {
+        NSString *value = (NSString *)selectValue;
+        NSInteger stage = [[value substringToIndex:value.length-1] integerValue];
+        weakSelf.user.edu_exp = [NSNumber numberWithInteger:stage];
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
         [weakSelf.teachInfoTableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
     }];
@@ -109,18 +117,19 @@
 #pragma mark 教授阶段
 -(void)setTeachingStage{
     kSelfWeak;
-    [BRStringPickerView showStringPickerWithTitle:@"授课阶段" dataSource:@[@"小学",@"初中"] defaultSelValue:self.teachInfo.teach_stage isAutoSelect:NO resultBlock:^(id selectValue) {
+    NSString *defaultStage = [self.user.edu_stage integerValue]<2?@"小学":@"初中";
+    [BRStringPickerView showStringPickerWithTitle:@"授课阶段" dataSource:@[@"小学",@"初中"] defaultSelValue:defaultStage isAutoSelect:NO resultBlock:^(id selectValue) {
         if (!kIsEmptyString(lastStage)) {
             if (![lastStage isEqualToString:selectValue]) {
                 lastStage = selectValue;
-                weakSelf.teachInfo.teach_stage = selectValue;
-                weakSelf.teachInfo.grade = nil;
-                weakSelf.teachInfo.subject = nil;
+                weakSelf.user.edu_stage = [selectValue isEqualToString:@"小学"]?@1:@2;
+                weakSelf.user.grade = nil;
+                weakSelf.user.subject = nil;
                 [weakSelf.teachInfoTableView reloadData];
             }
         }else{
             lastStage = selectValue;
-            weakSelf.teachInfo.teach_stage = selectValue;
+            weakSelf.user.edu_stage = [selectValue isEqualToString:@"小学"]?@1:@2;
             NSIndexPath *indexPath = [NSIndexPath indexPathForRow:1 inSection:0];
             [weakSelf.teachInfoTableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
         }
@@ -129,16 +138,16 @@
 
 #pragma mark 授课年级
 -(void)setTeachingGrade{
-    NSArray *gradesArr = [self.teachInfo.teach_stage isEqualToString:@"小学"]?@[@"一年级",@"二年级",@"三年级",@"四年级",@"五年级",@"六年级"]:@[@"初一",@"初二",@"初三"];
+    NSArray *gradesArr = [self.user.edu_stage integerValue]==1?@[@"一年级",@"二年级",@"三年级",@"四年级",@"五年级",@"六年级"]:@[@"初一",@"初二",@"初三"];
     ChooseGradeViewController *chooseGradeVC = [[ChooseGradeViewController alloc] init];
     chooseGradeVC.gradesArray = gradesArr;
-    if (!kIsEmptyString(self.teachInfo.grade)) {
-        chooseGradeVC.selectedGradesArray = [self.teachInfo.grade componentsSeparatedByString:@","];
+    if (kIsArray(self.user.grade)&&self.user.grade.count>0) {
+        chooseGradeVC.selectedGradesArray = self.user.grade;
     }
     
     kSelfWeak;
-    chooseGradeVC.getGradeBlock = ^(NSString *gradeStr) {
-        weakSelf.teachInfo.grade = gradeStr;
+    chooseGradeVC.getGradeBlock = ^(NSMutableArray *gradesArr) {
+        weakSelf.user.grade = gradesArr;
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:2 inSection:0];
         [weakSelf.teachInfoTableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
     };
@@ -147,10 +156,13 @@
 
 #pragma mark 教学科目
 -(void)setTeachingSubjects{
-    NSArray *subjectsArr = [[ZYHelper sharedZYHelper] getCourseForStage:self.teachInfo.teach_stage];
+    NSArray *subjects = [ZYHelper sharedZYHelper].subjects;
+    
+    NSString *eduStage = [self.user.edu_stage integerValue]==1?@"小学":@"初中";
+    NSArray *subjectsArr = [eduStage isEqualToString:@"小学"]?@[@"语文",@"数学",@"英语"]:subjects;
     kSelfWeak;
-    [BRStringPickerView showStringPickerWithTitle:@"教学科目" dataSource:subjectsArr defaultSelValue:self.teachInfo.subject isAutoSelect:NO resultBlock:^(id selectValue) {
-        weakSelf.teachInfo.subject = selectValue;
+    [BRStringPickerView showStringPickerWithTitle:@"教学科目" dataSource:subjectsArr defaultSelValue:self.user.subject isAutoSelect:NO resultBlock:^(id selectValue) {
+        weakSelf.user.subject = selectValue;
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:3 inSection:0];
         [weakSelf.teachInfoTableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
     }];
@@ -159,12 +171,49 @@
 #pragma mark -- Event response
 #pragma mark 完成
 -(void)confirmSetTeachInfoAction{
-    if (self.isLoginIn) {
-        AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-        [appDelegate setMyRootViewController];
-    }else{
-        [self.navigationController popViewControllerAnimated:YES];
+    if ([self.user.edu_exp integerValue]<1) {
+        [self.view makeToast:@"请设置教学经验" duration:1.0 position:CSToastPositionCenter];
+        return;
     }
+    if ([self.user.edu_stage integerValue]<1) {
+        [self.view makeToast:@"请设置教授阶段" duration:1.0 position:CSToastPositionCenter];
+        return;
+    }
+    
+    if (self.user.grade.count<1) {
+        [self.view makeToast:@"请选择授课年级" duration:1.0 position:CSToastPositionCenter];
+        return;
+    }
+    if (kIsEmptyString(self.user.subject)) {
+        [self.view makeToast:@"请选择教学科目" duration:1.0 position:CSToastPositionCenter];
+        return;
+    }
+    
+    NSMutableArray *gradesArr = [[ZYHelper sharedZYHelper] setGradeIdsArrayWithGradeStrs:self.user.grade];
+    NSString *gradesJsonStr = [TCHttpRequest getValueWithParams:gradesArr];
+    
+    NSArray *subjectsArr = [ZYHelper sharedZYHelper].subjects;
+    NSInteger subIndex = [subjectsArr indexOfObject:self.user.subject]+1;
+    
+    NSString *body = [NSString stringWithFormat:@"token=%@&exp=%@&stage=%@&grade=%@&subject=%ld",self.user.token,self.user.edu_exp,self.user.edu_stage,gradesJsonStr,subIndex];
+    kSelfWeak;
+    [TCHttpRequest postMethodWithURL:kSetUserInfoAPI body:body success:^(id json) {
+        if (!weakSelf.isLoginIn) {
+            NSMutableDictionary *dic = [[NSMutableDictionary alloc] initWithDictionary:[NSUserDefaultsInfos getDicValueforKey:kUserInfo]];
+            [dic setObject:weakSelf.user.grade forKey:@"grade"];
+            [dic setObject:weakSelf.user.subject forKey:@"subject"];
+            [NSUserDefaultsInfos putKey:kUserInfo anddict:dic];
+        }
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            if (weakSelf.isLoginIn) {
+                [NSUserDefaultsInfos putKey:kIsLogin andValue:[NSNumber numberWithBool:YES]];
+                AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+                [appDelegate setMyRootViewController];
+            }else{
+                [weakSelf.navigationController popViewControllerAnimated:YES];
+            }
+        });
+    }];
 }
 
 
@@ -197,14 +246,6 @@
         [_completeButton addTarget:self action:@selector(confirmSetTeachInfoAction) forControlEvents:UIControlEventTouchUpInside];
     }
     return _completeButton;
-}
-
-#pragma mark
--(TeachModel *)teachInfo{
-    if (!_teachInfo) {
-        _teachInfo = [[TeachModel alloc] init];
-    }
-    return _teachInfo;
 }
 
 
