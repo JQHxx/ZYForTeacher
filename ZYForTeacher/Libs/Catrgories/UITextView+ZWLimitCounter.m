@@ -22,14 +22,14 @@ static char labHeightKey;
 #pragma mark - swizzled
 - (void)zwlimitCounter_swizzled_dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-//    @try {
-//        [self removeObserver:self forKeyPath:@"layer.borderWidth"];
-//        [self removeObserver:self forKeyPath:@"text"];
-//    } @catch (NSException *exception) {
-//
-//    } @finally {
-//
-//    }
+    @try {
+        [self removeObserver:self forKeyPath:@"layer.borderWidth"];
+        [self removeObserver:self forKeyPath:@"text"];
+    } @catch (NSException *exception) {
+
+    } @finally {
+
+    }
     [self zwlimitCounter_swizzled_dealloc];
 }
 - (void)zwlimitCounter_swizzling_layoutSubviews {

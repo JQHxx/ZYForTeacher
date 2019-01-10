@@ -63,6 +63,7 @@
     BaseWebViewController *webVC = [[BaseWebViewController alloc] init];
     webVC.urlStr = model.url;
     webVC.webTitle = @"消息详情";
+    webVC.webType = WebViewTypeSystem;
     [self.navigationController pushViewController:webVC animated:YES];
 }
 

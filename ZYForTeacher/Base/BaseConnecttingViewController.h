@@ -34,4 +34,6 @@
 //挂断
 -(void)hangUp;
 
+-(void)connectStudentForStaticsWithIndex:(NSInteger)index;
+
 @end

@@ -10,6 +10,7 @@
 #import "BindBankCardViewController.h"
 #import "WLCardNoFormatter.h"
 #import "BankModel.h"
+#import "LoginButton.h"
 
 @interface AddBankCardViewController ()<UITableViewDelegate,UITableViewDataSource,UITextFieldDelegate>{
     NSArray       *titlesArr;
@@ -20,7 +21,7 @@
 
 @property (nonatomic , strong) UITableView *addBankTableView;
 @property (nonatomic , strong) UILabel     *tipsLabel;
-@property (nonatomic , strong) UIButton    *nextButton;
+@property (nonatomic , strong) LoginButton    *nextButton;
 @property ( nonatomic, strong) WLCardNoFormatter *cardNoFormatter;
 
 @end
@@ -51,11 +52,11 @@
     UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
     cell.textLabel.text = titlesArr[indexPath.row];
-    cell.textLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+    cell.textLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?25:16];
     cell.textLabel.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
     
-    UITextField *textfield = [[UITextField alloc] initWithFrame:CGRectMake(106, 15, kScreenWidth-120, 22)];
-    textfield.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+    UITextField *textfield = [[UITextField alloc] initWithFrame:IS_IPAD?CGRectMake(166, 21, kScreenWidth-180, 36):CGRectMake(106, 15, kScreenWidth-120, 22)];
+    textfield.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?25:16];
     textfield.clearButtonMode = UITextFieldViewModeWhileEditing;
     textfield.placeholder = indexPath.row==0?@"请填写持卡人姓名":@"请输入银行卡号";
     textfield.delegate = self;
@@ -71,7 +72,15 @@
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    return  50;
+    return  IS_IPAD?80:50;
+}
+
+- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath{
+    if (IS_IPAD) {
+        [cell setSeparatorInset:UIEdgeInsetsMake(0, 39, 0, 38)];
+    }else{
+        [cell setSeparatorInset:UIEdgeInsetsMake(0,21, 0, 0)];
+    }
 }
 
 #pragma mark -- Delegate
@@ -128,9 +137,9 @@
 #pragma mark 说明
 -(UILabel *)tipsLabel{
     if (!_tipsLabel) {
-        _tipsLabel = [[UILabel alloc] initWithFrame:CGRectMake(25, kNavHeight+130,kScreenWidth-50, 20)];
+        _tipsLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(50, kNavHeight+237, kScreenWidth-100, 30):CGRectMake(25, kNavHeight+160,kScreenWidth-50, 20)];
         _tipsLabel.text = @"*请绑定持卡人本人的银行卡";
-        _tipsLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:14];
+        _tipsLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:IS_IPAD?22:14];
         _tipsLabel.textColor = [UIColor colorWithHexString:@"#E42A2A"];
         _tipsLabel.textAlignment = NSTextAlignmentCenter;
     }
@@ -138,12 +147,10 @@
 }
 
 #pragma mark 下一步
--(UIButton *)nextButton{
+-(LoginButton *)nextButton{
     if (!_nextButton) {
-        _nextButton = [[UIButton alloc] initWithFrame:CGRectMake(48,kNavHeight+190 , kScreenWidth-95,(kScreenWidth-95)*(128.0/588.0))];
-        [_nextButton setTitle:@"下一步" forState:UIControlStateNormal];
-        [_nextButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        [_nextButton setBackgroundImage:[UIImage imageNamed:@"login_bg_btn"] forState:UIControlStateNormal];
+        CGRect btnFrame = IS_IPAD?CGRectMake((kScreenWidth-515)/2.0,self.tipsLabel.bottom+22.0 ,515, 75):CGRectMake(48,kNavHeight+190,kScreenWidth-96, 60);
+        _nextButton = [[LoginButton alloc] initWithFrame:btnFrame title:@"下一步"];
         [_nextButton addTarget:self action:@selector(nextStepAction) forControlEvents:UIControlEventTouchUpInside];
     }
     return _nextButton;

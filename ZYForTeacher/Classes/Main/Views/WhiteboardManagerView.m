@@ -11,8 +11,8 @@
 #import "WhiteboardCollecetionViewFlowLayout.h"
 #import "WhiteboardCollectionViewCell.h"
 
-#define kBtnW 84.0
-#define kBtnH 116.0
+#define kBtnW IS_IPAD?138.0:84.0
+#define kBtnH IS_IPAD?176.0:116.0
 
 @interface WhiteboardManagerView ()<UICollectionViewDelegate,UICollectionViewDataSource>
 
@@ -25,8 +25,8 @@
     self = [super initWithFrame:frame];
     if (self) {
         
-        UIImageView *bgImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, kScreenWidth, 127)];
-        bgImageView.image = [UIImage imageNamed:@"coach_whiteboard_background"];
+        UIImageView *bgImageView = [[UIImageView alloc] initWithFrame:IS_IPAD?CGRectMake(0, 0, kScreenWidth, 195): CGRectMake(0, 0, kScreenWidth, 127)];
+        bgImageView.image = [UIImage imageNamed:IS_IPAD?@"coach_whiteboard_background_ipad":@"coach_whiteboard_background"];
         [self addSubview:bgImageView];
         
         WhiteboardCollecetionViewFlowLayout *layout = [[WhiteboardCollecetionViewFlowLayout alloc] init];
@@ -53,7 +53,7 @@
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
     WhiteboardCollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"WhiteboardCollectionViewCell" forIndexPath:indexPath];
     if (indexPath.row==0) {
-        cell.contentImage = [UIImage imageNamed:@"coach_whiteboard_add"];
+        cell.contentImage = [UIImage imageNamed:IS_IPAD?@"coach_whiteboard_add_ipad":@"coach_whiteboard_add"];
         cell.titleStr = @"新建白板";
         cell.deleteBtn.hidden = YES;
     }else{

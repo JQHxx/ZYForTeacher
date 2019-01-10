@@ -31,6 +31,7 @@
 @property (nonatomic ,strong) NSNumber   *pay_time;           //支付时间
 @property (nonatomic ,strong) NSNumber   *pay_money;          //支付金额
 @property (nonatomic ,strong) NSNumber   *cate;               //支付方式
+@property (nonatomic ,strong) NSNumber   *temp_time;          //临时辅导时间
 
 @property (nonatomic , copy )  NSString   *third_id;         //通信ID
 

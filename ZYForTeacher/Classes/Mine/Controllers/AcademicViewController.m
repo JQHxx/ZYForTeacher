@@ -34,7 +34,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.baseTitle = @"学历认证";
-    self.rigthTitleName = @"保存";
+    self.rigthTitleName = @"提交";
     
     academicTitles = @[@"学历",@"学校",@"在校时间"];
     tipsStr = @"*如果你是在校生，请上传学生证照片，如果你已毕业，请上传毕业证照片*";
@@ -55,13 +55,13 @@
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
     UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:nil];
     if (indexPath.row<3) {
-        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        cell.accessoryType = UITableViewCellAccessoryNone;
         cell.selectionStyle = UITableViewCellSelectionStyleDefault;
         
         cell.textLabel.text = academicTitles[indexPath.row];
-        cell.textLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+        cell.textLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?25:16];
         cell.textLabel.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
-        cell.detailTextLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+        cell.detailTextLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?25:16];
         cell.detailTextLabel.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
         if (indexPath.row==0) {
             cell.detailTextLabel.text = academicStr;
@@ -70,31 +70,40 @@
         }else{
             cell.detailTextLabel.text = kIsEmptyObject(startTimeStr)?@"": [NSString stringWithFormat:@"%@至%@",startTimeStr,endTimeStr];
         }
+        
+        if (IS_IPAD) {
+            cell.accessoryType = UITableViewCellAccessoryNone;
+            UIImageView *arrowImageView = [[UIImageView alloc] initWithFrame:CGRectMake(kScreenWidth-55.4,27,12.6,23)];
+            arrowImageView.image = [UIImage imageNamed:@"arrow_ipad"];
+            [cell.contentView addSubview:arrowImageView];
+        }else{
+            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        }
     }else{
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
         
-        UILabel *lab = [[UILabel alloc] initWithFrame:CGRectMake(15, 15, 200, 22)];
-        lab.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+        UILabel *lab = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(40, 20, 240, 36):CGRectMake(15, 15, 200, 22)];
+        lab.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?25:16];
         lab.text = @"上传学历证明照片";
         lab.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
         [cell.contentView addSubview:lab];
         
-        UIButton *academicBtn = [[UIButton alloc] initWithFrame:CGRectMake(28,lab.bottom+14,kScreenWidth-55,kPhotoHeight)];
+        UIButton *academicBtn = [[UIButton alloc] initWithFrame:IS_IPAD?CGRectMake(138, lab.bottom+20, kScreenWidth-276, 276):CGRectMake(28,lab.bottom+14,kScreenWidth-55,kPhotoHeight)];
         academicBtn.backgroundColor = [UIColor colorWithHexString:@"#F1F1F2"];
         academicBtn.imageView.contentMode = UIViewContentModeScaleAspectFill;
         academicBtn.imageView.clipsToBounds = YES;
-        UIImage *tempImage = academicImage?academicImage:[UIImage drawImageWithName:@"add_photo" size:CGSizeMake(49, 46)];
+        UIImage *tempImage = academicImage?academicImage:[UIImage drawImageWithName:@"add_photo" size:IS_IPAD?CGSizeMake(70, 65):CGSizeMake(49, 46)];
         [academicBtn setImage:tempImage forState:UIControlStateNormal];
-        [academicBtn addTarget:self action:@selector(addAcademicImageAction) forControlEvents:UIControlEventTouchUpInside];
+        [academicBtn addTarget:self action:@selector(addAcademicImageAction:) forControlEvents:UIControlEventTouchUpInside];
         [cell.contentView addSubview:academicBtn];
         
         UILabel *tipsLab = [[UILabel alloc] initWithFrame:CGRectMake(25, 15, 120, 22)];
-        tipsLab.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:12];
+        tipsLab.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?20:12];
         tipsLab.textColor = [UIColor colorWithHexString:@"#9B9B9B"];
         tipsLab.numberOfLines = 0;
         tipsLab.text = tipsStr;
-        CGFloat tipsLabH = [tipsStr boundingRectWithSize:CGSizeMake(kScreenWidth-56, CGFLOAT_MAX) withTextFont:tipsLab.font].height;
-        tipsLab.frame =CGRectMake(28, academicBtn.bottom+16, kScreenWidth-56, tipsLabH);
+        CGFloat tipsLabH = [tipsStr boundingRectWithSize:IS_IPAD?CGSizeMake(kScreenWidth-238, CGFLOAT_MAX):CGSizeMake(kScreenWidth-56, CGFLOAT_MAX) withTextFont:tipsLab.font].height;
+        tipsLab.frame = IS_IPAD?CGRectMake(119, academicBtn.bottom+20, kScreenWidth-238, tipsLabH):CGRectMake(28, academicBtn.bottom+16, kScreenWidth-56, tipsLabH);
         [cell.contentView addSubview:tipsLab];
     }
      return cell;
@@ -115,10 +124,18 @@
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
     if (indexPath.row<3) {
-        return 50;
+        return IS_IPAD?76:50;
     }else{
-        CGFloat tipsLabH = [tipsStr boundingRectWithSize:CGSizeMake(kScreenWidth-56, CGFLOAT_MAX) withTextFont:[UIFont pingFangSCWithWeight:FontWeightStyleRegular size:12]].height;
-        return kPhotoHeight+tipsLabH+80;
+        CGFloat tipsLabH = [tipsStr boundingRectWithSize:IS_IPAD?CGSizeMake(kScreenWidth-238, CGFLOAT_MAX):CGSizeMake(kScreenWidth-56, CGFLOAT_MAX) withTextFont:[UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?20:12]].height;
+        return IS_IPAD?276+tipsLabH+120:kPhotoHeight+tipsLabH+80;
+    }
+}
+
+- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath{
+    if (IS_IPAD) {
+        [cell setSeparatorInset:UIEdgeInsetsMake(0,40, 0,40)];
+    }else{
+        [cell setSeparatorInset:UIEdgeInsetsMake(0,21, 0, 0)];
     }
 }
 
@@ -126,10 +143,8 @@
 #pragma mark  UIImagePickerControllerDelegate
 -(void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<NSString *,id> *)info{
     [self.imgPicker dismissViewControllerAnimated:YES completion:nil];
-    UIImage* curImage = [info objectForKey:UIImagePickerControllerEditedImage];
-    curImage = [curImage cropImageWithSize:CGSizeMake(kScreenWidth-55,kPhotoHeight)];
-    academicImage = curImage;
-    MyLog(@"image-- h:%.1f,w:%.1f",curImage.size.height,curImage.size.width);
+    academicImage = [info objectForKey:UIImagePickerControllerOriginalImage];
+    MyLog(@"image-- h:%.1f,w:%.1f",academicImage.size.height,academicImage.size.width);
     
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:3 inSection:0];
     [self.academicTableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
@@ -229,8 +244,8 @@
 }
 
 #pragma mark 上传图片
--(void)addAcademicImageAction{
-    [self addPhoto];
+-(void)addAcademicImageAction:(UIButton *)sender{
+    [self addPhotoForView:sender];
 }
 
 

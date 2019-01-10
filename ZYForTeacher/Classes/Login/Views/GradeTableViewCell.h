@@ -10,6 +10,7 @@
 
 @interface GradeTableViewCell : UITableViewCell
 
+@property (nonatomic ,strong) UIButton  *selectButton;    //选择
 @property (nonatomic, assign) BOOL isSelected;
 
 @end

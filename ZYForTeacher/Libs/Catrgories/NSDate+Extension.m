@@ -30,6 +30,14 @@
     return [format stringFromDate:[NSDate date]];
 }
 
+#pragma mark 今天
++(NSString *)GetCurrentDay{
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"yyyy-MM-dd"];
+    NSString *date = [formatter stringFromDate:[NSDate date]];
+    return date;
+}
+
 #pragma mark 当前时间
 +(NSString *)currentTime{
     NSDateFormatter *format = [[NSDateFormatter alloc]init];

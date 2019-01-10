@@ -10,6 +10,6 @@
 
 @interface BankCardListViewController : BaseViewController
 
-@property (nonatomic, strong) NSMutableArray *bankCardList;
+
 
 @end

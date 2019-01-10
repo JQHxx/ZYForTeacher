@@ -19,22 +19,31 @@
 #define kAppDelegate   (AppDelegate *)[[UIApplication  sharedApplication] delegate]
 // keyWindow
 #define kKeyWindow     [UIApplication sharedApplication].keyWindow
-//iPhone x判断
-#define isIPhoneX ([UIScreen instancesRespondToSelector:@selector(currentMode)] ? [[UIScreen mainScreen] currentMode].size.height==2436 : NO)
+//iPhoneX判断
+#define IS_IPHONE_X ([UIScreen instancesRespondToSelector:@selector(currentMode)] ? CGSizeEqualToSize(CGSizeMake(1125, 2436), [[UIScreen mainScreen] currentMode].size) : NO)
+//iPhoneXr判断
+#define IS_IPHONE_Xr ([UIScreen instancesRespondToSelector:@selector(currentMode)] ? CGSizeEqualToSize(CGSizeMake(750, 1624), [[UIScreen mainScreen] currentMode].size) : NO)
+//iPhoneXs判断
+#define IS_IPHONE_Xs ([UIScreen instancesRespondToSelector:@selector(currentMode)] ? CGSizeEqualToSize(CGSizeMake(1125, 2436), [[UIScreen mainScreen] currentMode].size) : NO)
+//iPhoneXs Max判断
+#define IS_IPHONE_Xs_Max ([UIScreen instancesRespondToSelector:@selector(currentMode)] ? CGSizeEqualToSize(CGSizeMake(1125, 2436), [[UIScreen mainScreen] currentMode].size) : NO)
+
+//iPad 判断
+#define IS_IPAD (UI_USER_INTERFACE_IDIOM()==UIUserInterfaceIdiomPad)
+
 //block weakself
 #define kSelfWeak __weak typeof(self) weakSelf = self
 
 //屏幕尺寸
+#define isXDevice         (IS_IPHONE_X==YES || IS_IPHONE_Xr == YES || IS_IPHONE_Xs == YES || IS_IPHONE_Xs_Max == YES)
 #define kScreenHeight     [UIScreen mainScreen].bounds.size.height
 #define kScreenWidth      [UIScreen mainScreen].bounds.size.width
-#define kTabHeight        (isIPhoneX ? (49+ 34) : 49)
-#define kNavHeight        (isIPhoneX ? 88 : 64)
-#define KStatusHeight     (isIPhoneX ? 44 : 20)
 
+#define kNavHeight       (IS_IPAD?88:((isXDevice ? 88 : 64)))
+#define KStatusHeight    (isXDevice ? 44 : 20)
 
 //颜色
 #define kRGBColor(r, g, b)    [UIColor colorWithRed:(r)/255.0  green:(g)/255.0 blue:(b)/255.0  alpha:1]
-//#define kSystemColor          [UIColor colorWithHexString:@"#05d380"]
 #define kSystemColor          [UIColor whiteColor]
 #define kbgView               [UIColor colorWithHexString:@"#f0f0f0"]
 #define kBackgroundColor      kRGBColor(238,241,241)  // 灰色主题背景色
@@ -84,6 +93,13 @@ Stuff; \
 _Pragma("clang diagnostic pop") \
 } while (0)
 
+#define dispatch_async_main_safe(block)\
+if ([NSThread isMainThread]) {\
+block();\
+} else {\
+dispatch_async(dispatch_get_main_queue(), block);\
+}
+
 
 /*****************第三方平台APPKEY***************/
 //网易云
@@ -113,9 +129,15 @@ _Pragma("clang diagnostic pop") \
 #define kAuthIdentidy             @"kAuthIdentidy"
 #define kAuthSkill                @"kAuthSkill"
 #define kAuthTeach                @"kAuthTeach"
+#define kCheckRecieveNotification @"kCheckRecieveNotification"
+#define kGuideRecieveNotification @"kGuideRecieveNotification"
 #define kAuthUpdateNotification   @"kAuthUpdateNotification"
 #define kGuideCancelNotification   @"kGuideCancelNotification"
 #define kOrderCancelNotification   @"kOrderCancelNotification"
+
+#define kShowGuidance              @"kShowGuidance"
+
+#define kCallingForID              @"kCallingForID"
 
 #define kUserIDValue      [NSUserDefaultsInfos getValueforKey:kUserID]
 #define kUserTokenValue   [NSUserDefaultsInfos getValueforKey:kUserToken]
@@ -139,3 +161,31 @@ _Pragma("clang diagnostic pop") \
 
 
 
+/*
+ iPhone 5S 640x1136
+ iPhone 5C 640x1136
+ iPhone 6 750x1334
+ iPhone 6 Plus 1080x1920（开发应按照1242x2208适配）
+ iPhone 6S 750x1334
+ iPhone 6S Plus 1080x1920（开发应按照1242x2208适配）
+ iPhone SE 640x1136
+ iPhone 7 750x1334
+ iPhone 7 Plus 1080x1920（开发应按照1242x2208适配）
+ Phone XS 1125x2436（375*812pt*）
+ iPhone XR 828x1792（414*896pt*）
+ iPhone XS Max 1242x2688（414*896pt*）
+ 
+ iPad 1 1024x768
+ iPad 2 1024x768
+ The New iPad 2048x1536
+ iPad mini  1024x768
+ iPad 4  2048x1536
+ iPad Air 2048x1536
+ iPad mini 2  2048x1536
+ iPad Air 2  2048x1536
+ iPad mini 3  2048x1536
+ iPad mini 4  2048x1536
+ iPad Pro  2732x2048
+
+ 
+ */

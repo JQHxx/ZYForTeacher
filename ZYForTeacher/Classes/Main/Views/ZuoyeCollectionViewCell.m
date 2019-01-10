@@ -27,72 +27,88 @@
     self = [super initWithFrame:frame];
     if (self) {
         CGFloat rootW = (kScreenWidth-30)/2.0;
-        CGFloat rootH = rootW*(160.0/172.0);
-        UIView *rootView = [[UIView alloc] initWithFrame:CGRectMake(10, 10, rootW, rootH)];
+        CGFloat rootH = IS_IPAD?rootW+124:rootW+63;
+        UIView *rootView = [[UIView alloc] initWithFrame:CGRectMake(10, 5, rootW, rootH)];
         rootView.backgroundColor = [UIColor whiteColor];
         rootView.layer.cornerRadius = 4.0;
-        rootView.layer.borderWidth = 0.5;
-        rootView.layer.borderColor = [UIColor colorWithHexString:@"#D8D8D8"].CGColor;
         [self.contentView addSubview:rootView];
         
-        self.zuoyeImgView = [[UIImageView alloc] initWithFrame:CGRectMake(10, 10, rootW, rootW*(97.0/172.0))];
+        self.zuoyeImgView = [[UIImageView alloc] initWithFrame:CGRectMake(10, 5, rootW, rootW)];
         self.zuoyeImgView.contentMode = UIViewContentModeScaleAspectFill;
         self.zuoyeImgView.clipsToBounds = YES;
+        [self.zuoyeImgView drawBorderRadisuWithType:BoderRadiusTypeTop boderRadius:4.0];
         [self.contentView addSubview:self.zuoyeImgView];
         
-        self.orderTimeLabel = [[UILabel alloc] initWithFrame:CGRectMake(rootW-65, 16, 65, 16)];
-        self.orderTimeLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:11];
+        CGRect timeRect = IS_IPAD?CGRectMake(rootW-70, 12, 70, 37):CGRectMake(rootW-65, 16, 65, 16);
+        CGFloat timeFontSize = IS_IPAD?24.0:11.0;
+        self.orderTimeLabel = [[UILabel alloc] initWithFrame:timeRect];
+        self.orderTimeLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:timeFontSize];
         self.orderTimeLabel.textColor = [UIColor whiteColor];
         self.orderTimeLabel.textAlignment = NSTextAlignmentCenter;
         self.orderTimeLabel.backgroundColor = [UIColor blackColor];
         self.orderTimeLabel.alpha =0.4;
-        self.orderTimeLabel.layer.cornerRadius = 4.0;
+        self.orderTimeLabel.layer.cornerRadius = IS_IPAD?8.0:4.0;
         self.orderTimeLabel.clipsToBounds = YES;
         [self.contentView addSubview:self.orderTimeLabel];
         
-        CGRect bgViewRect = kScreenWidth<375.0?CGRectMake(12,self.zuoyeImgView.bottom-20, 40.0, 40.0):CGRectMake(15.5,self.zuoyeImgView.bottom-22.5, 45.0, 45.0);
+        CGRect bgViewRect,headRect,nameRect,priceRect,btnRect;
+        CGFloat fontSize,fontSize2,btnSize;
+        if (IS_IPAD) {
+            bgViewRect = CGRectMake(16,self.zuoyeImgView.bottom-46, 92.0, 92.0);
+            headRect = CGRectMake(21, self.zuoyeImgView.bottom-41,82,82);
+            nameRect = CGRectMake(headRect.origin.x+headRect.size.width+14, self.zuoyeImgView.bottom+6.0, rootW-headRect.origin.x-headRect.size.width-10, 33);
+            priceRect = CGRectMake(20, headRect.origin.y+headRect.size.height+13, 180, 46);
+            btnRect = CGRectMake(rootW-130, nameRect.origin.y+nameRect.size.height+17, 128, 42);
+            fontSize = 24.0;
+            fontSize2 = 33.0;
+            btnSize = 24.0;
+        }else{
+            bgViewRect = kScreenWidth<375.0?CGRectMake(12,self.zuoyeImgView.bottom-20, 40.0, 40.0):CGRectMake(15.5,self.zuoyeImgView.bottom-22.5, 45.0, 45.0);
+            headRect = kScreenWidth<375.0?CGRectMake(14.5, self.zuoyeImgView.bottom-17.5,  35,35):CGRectMake(18, self.zuoyeImgView.bottom-20,  40,40);
+            nameRect = CGRectMake(headRect.origin.x+headRect.size.width+8, self.zuoyeImgView.bottom+2.0, rootW-headRect.origin.x-headRect.size.width-3, 20);
+            priceRect = CGRectMake(15, headRect.origin.y+headRect.size.height+10, 90, 22);
+            btnRect = kScreenWidth<375?CGRectMake(rootW-55, nameRect.origin.y+nameRect.size.height+8, 60,20):CGRectMake(rootW-70, nameRect.origin.y+nameRect.size.height+8, 70,24);
+            fontSize = kScreenWidth<375?11.0:13.0;
+            fontSize2 = kScreenWidth<375?14.0:16.0;
+            btnSize = 12.0;
+        }
         UIView *bgView = [[UIView alloc] initWithFrame:bgViewRect];
         bgView.backgroundColor = [UIColor whiteColor];
         [bgView drawBorderRadisuWithType:BoderRadiusTypeAll boderRadius:bgViewRect.size.height/2.0];
         [self.contentView addSubview:bgView];
         
-        CGRect headRect = kScreenWidth<375.0?CGRectMake(14.5, self.zuoyeImgView.bottom-17.5,  35,35):CGRectMake(18, self.zuoyeImgView.bottom-20,  40,40);
         self.headImageView = [[UIImageView alloc] initWithFrame:headRect];
         self.headImageView.boderRadius = headRect.size.height/2.0;
         [self.contentView addSubview:self.headImageView];
         
-        self.nameLabel = [[UILabel alloc] initWithFrame:CGRectMake(self.headImageView.right+8, self.zuoyeImgView.bottom+2.0, rootW-self.headImageView.right-3, 20)];
-        CGFloat fontSize = kScreenWidth<375?11.0:13.0;
+        self.nameLabel = [[UILabel alloc] initWithFrame:nameRect];
         self.nameLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:fontSize];
         self.nameLabel.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
         [self.contentView addSubview:self.nameLabel];
         
-        self.priceLabel = [[UILabel alloc] initWithFrame:CGRectMake(15, self.headImageView.bottom+10, 90, 20)];
-        CGFloat fontSize2 = kScreenWidth<375?14.0:16.0;
+        self.priceLabel = [[UILabel alloc] initWithFrame:priceRect];
         self.priceLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:fontSize2];
         self.priceLabel.textColor = [UIColor colorWithHexString:@"#FF6161"];
         [self.contentView addSubview:self.priceLabel];
-        
-        CGRect btnRect = kScreenWidth<375?CGRectMake(rootW-55, self.nameLabel.bottom+5, 60,20):CGRectMake(rootW-70, self.nameLabel.bottom+8, 70,24);
         
         self.checkButton = [[UIButton alloc] initWithFrame:btnRect];
         [self.checkButton setBackgroundImage:[UIImage imageNamed:@"button3"] forState:UIControlStateNormal];
         [self.checkButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         [self.checkButton setTitle:@"去检查" forState:UIControlStateNormal];
-        self.checkButton.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:12];
+        self.checkButton.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:btnSize];
         [self.contentView addSubview:self.checkButton];
         
         self.acceptButton = [[UIButton alloc] initWithFrame:btnRect];
         [self.acceptButton setBackgroundImage:[UIImage imageNamed:@"button3"] forState:UIControlStateNormal];
         [self.acceptButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         [self.acceptButton setTitle:@"接单" forState:UIControlStateNormal];
-        self.acceptButton.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:12];
+        self.acceptButton.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:btnSize];
         [self.contentView addSubview:self.acceptButton];
         self.acceptButton.hidden = YES;
         
         self.tutriolButton = [[UIButton alloc] initWithFrame:btnRect];
         [self.tutriolButton setTitleColor:[UIColor colorWithHexString:@"#648FFE"] forState:UIControlStateNormal];
-        self.tutriolButton.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:12];
+        self.tutriolButton.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:btnSize];
         self.tutriolButton.layer.cornerRadius = 10;
         self.tutriolButton.layer.borderColor = [UIColor colorWithHexString:@"#648FFE"].CGColor;
         self.tutriolButton.layer.borderWidth = 0.7;
@@ -101,7 +117,7 @@
         self.tutriolButton.hidden = YES;
         
         self.stateLabel = [[UILabel alloc] initWithFrame:btnRect];
-        self.stateLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:13];
+        self.stateLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:btnSize];
         self.stateLabel.textColor = [UIColor colorWithHexString:@"#808080"];
         self.stateLabel.text = @"等待去辅导";
         [self.contentView addSubview:self.stateLabel];
@@ -131,15 +147,21 @@
     NSRange aRange = NSMakeRange(nameStr.length-homework.grade.length-1, homework.grade.length+1);
     NSMutableAttributedString *attributeStr = [[NSMutableAttributedString alloc] initWithString:nameStr];
     [attributeStr addAttribute:NSForegroundColorAttributeName value:[UIColor colorWithHexString:@"#808080"] range:aRange];
-    [attributeStr addAttribute:NSFontAttributeName value:[UIFont pingFangSCWithWeight:FontWeightStyleRegular size:12] range:aRange];
+    [attributeStr addAttribute:NSFontAttributeName value:self.nameLabel.font range:aRange];
     self.nameLabel.attributedText = attributeStr;
     //预约时间
     if ([homework.label integerValue]==2) {
-        self.orderTimeLabel.hidden = NO;
-        self.orderTimeLabel.text = [[ZYHelper sharedZYHelper] timeWithTimeIntervalNumber:homework.start_time format:@"MM/dd HH:mm"] ;
+        NSString *day = [[ZYHelper sharedZYHelper] timeWithTimeIntervalNumber:homework.start_time format:@"yyyy-MM-dd"];
+        NSString *today = [NSDate GetCurrentDay];
+        NSString *tempDayStr = [day isEqualToString:today]?@"今天":@"明天";
+        NSString *orderTimeStr = [[ZYHelper sharedZYHelper] timeWithTimeIntervalNumber:homework.start_time format:@"HH:mm"] ;
+        self.orderTimeLabel.text = [NSString stringWithFormat:@"%@/%@ %@",homework.subject,tempDayStr,orderTimeStr];
     }else{
-        self.orderTimeLabel.hidden = YES;
+        self.orderTimeLabel.text = homework.subject;
     }
+    
+    CGFloat orderWidth = [self.orderTimeLabel.text boundingRectWithSize:CGSizeMake((kScreenWidth-30)/2.0, self.orderTimeLabel.height) withTextFont:self.orderTimeLabel.font].width;
+    self.orderTimeLabel.frame = CGRectMake((kScreenWidth-30)/2.0-orderWidth-16, 16, orderWidth+20, self.orderTimeLabel.height);
     
     if ([homework.label integerValue]==1) { //作业检查
         self.checkButton .hidden = NO;

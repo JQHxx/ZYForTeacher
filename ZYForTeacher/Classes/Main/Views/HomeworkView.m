@@ -27,7 +27,7 @@ static NSString *sectionHeaderID =@"sechederview";
     if (self) {
         
         CGFloat rootW = (kScreenWidth-30)/2.0;
-        CGFloat rootH = rootW*(160.0/172.0);
+        CGFloat rootH = IS_IPAD?rootW+124: rootW+63;
         
         flowLayout = [[UICollectionViewFlowLayout alloc] init];
         // 设置UICollectionView为横向滚动
@@ -120,10 +120,12 @@ static NSString *sectionHeaderID =@"sechederview";
             }
             index = indexPath.section - 1;
         }else{
-            if (indexPath.section==0){
+            if (indexPath.section==0&&self.tutorialRealTimeArray.count>0){
                 model = self.tutorialRealTimeArray[indexPath.item];
             }else{
-                model = self.tutorialReserveArray[indexPath.item];
+                if (self.tutorialReserveArray.count>0) {
+                    model = self.tutorialReserveArray[indexPath.item];
+                }
             }
             index = indexPath.section;
         }
@@ -134,8 +136,6 @@ static NSString *sectionHeaderID =@"sechederview";
             cell.acceptButton.tag = index*100+indexPath.item;
             [cell.acceptButton addTarget:self action:@selector(receiveMyHomeworkAction:) forControlEvents:UIControlEventTouchUpInside];  //接单
         }
-        
-        
     }else{   //作业检查
         if (self.myZuoyeArray.count>0) {
             model = self.myZuoyeArray[indexPath.item];

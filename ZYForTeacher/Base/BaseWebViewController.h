@@ -11,6 +11,7 @@
 typedef enum : NSUInteger {
     WebViewTypeSystem,
     WebViewTypeUserAgreement,
+    WebViewTypeCommonProblem,
 } WebViewType;
 
 NS_ASSUME_NONNULL_BEGIN

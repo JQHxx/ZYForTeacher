@@ -15,13 +15,13 @@
 #import "ProfessionalViewController.h"
 #import "UserModel.h"
 
-#define kImageViewHeight 200
 
 @interface UserDetailsViewController ()<UITableViewDelegate,UITableViewDataSource>{
     NSArray    *titlesArray;
     NSArray    *classesArray;
+    
+    NSInteger  userIdentity;
 }
-
 
 @property (nonatomic ,strong) UITableView    *userTableView;
 
@@ -34,13 +34,16 @@
     
     self.baseTitle = @"个人中心";
     
-    titlesArray = @[@"个人信息",@"教学信息",@"实名认证",@"学历认证",@"教师资质",@"专业认证"];
+    
+    titlesArray = @[@"个人信息",@"教学信息",@"实名认证",@"学历认证",@"教师资质",@"等级职称"];
     
     [self.view addSubview:self.userTableView];
-    if (kIsEmptyObject(self.userInfo)) {
+    
+    if (self.isHomeworkIn) {
         self.userInfo = [[UserModel alloc] init];
         [self loadUserInfoData];
     }
+    
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -59,20 +62,27 @@
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
     UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:nil];
     cell.textLabel.text = titlesArray[indexPath.row];
-    cell.textLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+    cell.textLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?25:16];
     cell.textLabel.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
     if (indexPath.row==0||indexPath.row==1) {
-        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        if (IS_IPAD) {
+            cell.accessoryType = UITableViewCellAccessoryNone;
+            UIImageView *arrowImageView = [[UIImageView alloc] initWithFrame:CGRectMake(kScreenWidth-55.4,27,12.6,23)];
+            arrowImageView.image = [UIImage imageNamed:@"arrow_ipad"];
+            [cell.contentView addSubview:arrowImageView];
+        }else{
+            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        }
     }else{
         cell.accessoryType = UITableViewCellAccessoryNone;
         
-        UIImageView *authenticateImageView = [[UIImageView alloc] initWithFrame:CGRectMake(kScreenWidth-97, 14, 22, 22)];
-        authenticateImageView.image = [UIImage imageNamed:@"authentication"];
+        UIImageView *authenticateImageView = [[UIImageView alloc] initWithFrame:IS_IPAD?CGRectMake(kScreenWidth-162, 21, 34, 34):CGRectMake(kScreenWidth-97, 14, 22, 22)];
+        authenticateImageView.image = [UIImage imageNamed:IS_IPAD?@"authentication_ipad":@"authentication"];
         [cell.contentView addSubview:authenticateImageView];
         
-        UILabel *authenticateLabel = [[UILabel alloc] initWithFrame:CGRectMake(kScreenWidth-68, 14, 50, 22)];
-        authenticateLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+        UILabel *authenticateLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(kScreenWidth-118, 20, 80, 36):CGRectMake(kScreenWidth-68, 14, 50, 22)];
+        authenticateLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?25:16];
         [cell.contentView addSubview:authenticateLabel];
         if (indexPath.row==2) {
             authenticateImageView.hidden = [self.userInfo.auth_id integerValue]!=2;
@@ -93,9 +103,9 @@
             authenticateLabel.textColor = [UIColor colorWithHexString:@"#9B9B9B"];
         }
         if ([authenticateLabel.text isEqualToString:@"审核未通过"]) {
-            authenticateLabel.frame = CGRectMake(kScreenWidth-97, 14, 82, 22);
+            authenticateLabel.frame = IS_IPAD?CGRectMake(kScreenWidth-162, 20,120, 36):CGRectMake(kScreenWidth-97, 14, 82, 22);
         }else{
-            authenticateLabel.frame = CGRectMake(kScreenWidth-68, 14, 50, 22);
+            authenticateLabel.frame =IS_IPAD?CGRectMake(kScreenWidth-118, 20, 80, 36):CGRectMake(kScreenWidth-68, 14, 50, 22);
         }
         
     }
@@ -134,10 +144,19 @@
             [self.navigationController pushViewController:professionalVC animated:YES];
         }
     }
+    
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    return 50;
+    return IS_IPAD?76:50;
+}
+
+- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath{
+    if (IS_IPAD) {
+        [cell setSeparatorInset:UIEdgeInsetsMake(0,40, 0,40)];
+    }else{
+        [cell setSeparatorInset:UIEdgeInsetsMake(0,21, 0, 0)];
+    }
 }
 
 #pragma mark -- Private Methods
@@ -164,15 +183,29 @@
         NSDictionary *data = [json objectForKey:@"data"];
         [weakSelf.userInfo setValues:data];
         
+        weakSelf.userInfo.subject = kIsEmptyObject(data[@"subject"])?@"":weakSelf.userInfo.subject;
+        
         [NSUserDefaultsInfos putKey:kAuthIdentidy andValue:weakSelf.userInfo.auth_id];   //实名认证
         [NSUserDefaultsInfos putKey:kAuthEducation andValue:weakSelf.userInfo.auth_edu];  //学历认证
         [NSUserDefaultsInfos putKey:kAuthTeach andValue:weakSelf.userInfo.auth_teach];   //教师资质
         [NSUserDefaultsInfos putKey:kAuthSkill andValue:weakSelf.userInfo.auth_skill];    //技能认证
         
+        NSMutableDictionary *userDict = [[NSMutableDictionary alloc] init];
+        [userDict setObject:weakSelf.userInfo.tid forKey:@"tch_id"];
         if (!kIsEmptyString(weakSelf.userInfo.trait)&&!kIsEmptyString(weakSelf.userInfo.tch_name)) {
-            NSMutableDictionary *userDict = [[NSMutableDictionary alloc] initWithObjectsAndKeys:weakSelf.userInfo.tid,@"tid",weakSelf.userInfo.trait,@"trait",weakSelf.userInfo.tch_name,@"tch_name",weakSelf.userInfo.grade,@"grade",weakSelf.userInfo.subject,@"subject",weakSelf.userInfo.score,@"score",weakSelf.userInfo.guide_price,@"guide_price",weakSelf.userInfo.guide_time,@"tutoring_time",weakSelf.userInfo.check_num,@"check_num",nil];
-            [NSUserDefaultsInfos putKey:kUserInfo anddict:userDict];
+            [userDict setObject:weakSelf.userInfo.trait forKey:@"trait"];
+            [userDict setObject:weakSelf.userInfo.tch_name forKey:@"tch_name"];
         }
+        if (!kIsEmptyString(weakSelf.userInfo.subject)&&weakSelf.userInfo.grade.count>0) {
+            [userDict setObject:weakSelf.userInfo.subject forKey:@"subject"];
+            [userDict setObject:weakSelf.userInfo.grade forKey:@"grade"];
+        }
+        [userDict setObject:weakSelf.userInfo.score forKey:@"score"];
+        [userDict setObject:weakSelf.userInfo.guide_price forKey:@"guide_price"];
+        [userDict setObject:weakSelf.userInfo.guide_time forKey:@"guide_time"];
+        [userDict setObject:weakSelf.userInfo.check_num forKey:@"check_num"];
+        [NSUserDefaultsInfos putKey:kUserInfo anddict:userDict];
+        
         [NSUserDefaultsInfos putKey:kIsOnline andValue:weakSelf.userInfo.online];
         
         dispatch_sync(dispatch_get_main_queue(), ^{
@@ -185,7 +218,8 @@
 #pragma mark 用户信息
 -(UITableView *)userTableView{
     if (!_userTableView) {
-        _userTableView = [[UITableView alloc] initWithFrame:CGRectMake(0,kNavHeight, kScreenWidth, kScreenHeight-kNavHeight) style:UITableViewStylePlain];
+        CGFloat navheight = kNavHeight;
+        _userTableView = [[UITableView alloc] initWithFrame:CGRectMake(0,navheight+6, kScreenWidth, kScreenHeight-navheight-6) style:UITableViewStylePlain];
         _userTableView.dataSource = self;
         _userTableView.delegate = self;
         _userTableView.showsVerticalScrollIndicator=NO;

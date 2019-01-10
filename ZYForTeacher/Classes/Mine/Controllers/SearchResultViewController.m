@@ -7,7 +7,7 @@
 //
 
 #import "SearchResultViewController.h"
-#import "PinYin4Objc.h"
+#import <UMAnalytics/MobClick.h>
 
 @interface SearchResultViewController (){
     NSArray   *colleges;
@@ -24,6 +24,18 @@
     
     self.tableView.tableFooterView = [[UIView alloc] init];
     
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    
+    [MobClick beginLogPageView:@"搜索结果"];
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    
+    [MobClick endLogPageView:@"搜索结果"];
 }
 
 
@@ -43,7 +55,7 @@
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:identifier];
     }
     cell.textLabel.text = self.schoolsArray[indexPath.row];
-    cell.textLabel.font = kFontWithSize(14);
+    cell.textLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?25:14];
     return cell;
 }
 
@@ -53,6 +65,10 @@
     if ([self.myDelegate respondsToSelector:@selector(searchResultViewControllerDidSelelctSchoolText:) ]) {
         [self.myDelegate searchResultViewControllerDidSelelctSchoolText:schoolText];
     }
+}
+
+-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+    return IS_IPAD?62:50;
 }
 
 #pragma mark -- Getters and Setters

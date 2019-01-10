@@ -24,22 +24,22 @@
 -(instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier{
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
     if (self) {
-        billImageView = [[UIImageView alloc] initWithFrame:CGRectMake(17, 17, 34, 34)];
+        billImageView = [[UIImageView alloc] initWithFrame:IS_IPAD?CGRectMake(26, 26, 52, 52):CGRectMake(17, 17, 34, 34)];
         [self.contentView addSubview:billImageView];
         
-        typeLabel = [[UILabel alloc] initWithFrame:CGRectMake(billImageView.right+13, 13, 100, 21)];
+        typeLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(billImageView.right+20, 20, 150, 32):CGRectMake(billImageView.right+13, 13, 100, 21)];
         typeLabel.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
-        typeLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:15];
+        typeLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?23:15];
         [self.contentView addSubview:typeLabel];
         
-        timeLabel = [[UILabel alloc] initWithFrame:CGRectMake(billImageView.right+15, typeLabel.bottom, 110, 20)];
-        timeLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:13];
+        timeLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(billImageView.right+23,typeLabel.bottom+3, 180, 28):CGRectMake(billImageView.right+15, typeLabel.bottom, 110, 20)];
+        timeLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?20:13];
         timeLabel.textColor = [UIColor colorWithHexString:@"#9B9B9B"];
         [self.contentView addSubview:timeLabel];
         
-        amountLabel = [[UILabel alloc] initWithFrame:CGRectMake(kScreenWidth-128, 21, 110, 25)];
+        amountLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(kScreenWidth-180, 32, 140, 40):CGRectMake(kScreenWidth-128, 21, 110, 25)];
         amountLabel.textAlignment = NSTextAlignmentRight;
-        amountLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:18];
+        amountLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:IS_IPAD?28:18];
         [self.contentView addSubview:amountLabel];
     }
     return self;

@@ -12,7 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface UIButton (Extend)
 
-+(UIButton *)createCustomButtonWithFrame:(CGRect)aFrame Image:(UIImage *)aImage title:(NSString *)btnTitle;
++(UIButton *)createCustomButtonWithFrame:(CGRect)aFrame Image:(UIImage *)aImage title:(NSString *)btnTitle btnFont:(CGFloat)size;
 
 @end
 

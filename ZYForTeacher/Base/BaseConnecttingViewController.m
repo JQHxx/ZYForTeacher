@@ -10,6 +10,7 @@
 #import "JobTutorialViewController.h"
 #import <NIMSDK/NIMSDK.h>
 #import "YYModel.h"
+#import "NTESAVNotifier.h"
 
 //十秒之后如果还是没有收到对方响应的control字段，则自己发起一个假的control
 #define DelaySelfStartControlWarningTime 10
@@ -18,6 +19,7 @@
 @interface BaseConnecttingViewController ()<NIMNetCallManagerDelegate>{
     NSInteger   timeCount;
     NSTimer     *myTimer;
+    BOOL        isOtherCalling;
 }
 
 @end
@@ -41,6 +43,7 @@
         self.callInfo.caller = caller;
         self.callInfo.callee = [[NIMSDK sharedSDK].loginManager currentAccount];
         self.callInfo.callID = callID;
+        isOtherCalling = YES;
     }
     return self;
 }
@@ -65,6 +68,11 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    MyLog(@"callID:%lld",self.callInfo.callID);
+    [NSUserDefaultsInfos putKey:kCallingForID andValue:[NSNumber numberWithUnsignedLongLong:self.callInfo.callID]];
+    
+    [[NIMSDK sharedSDK].conversationManager markAllMessagesRead];
     
     kSelfWeak;
     [self checkServiceEnable:^(BOOL result) {
@@ -124,6 +132,10 @@
     [dic setObject:self.homework.job_pic forKey:@"job_pic"];
     [dic setObject:self.homework.label forKey:@"label"];
     [dic setObject:self.homework.job_price forKey:@"guide_price"];
+    if (self.isOrderIn) {
+        [dic setObject:self.homework.temp_time forKey:@"temp_time"];
+    }
+    
     NSString *cid = [[NIMSDK sharedSDK].loginManager currentAccount];
     [dic setValue:cid forKey:@"third_id"];
     NSString *str = [dic yy_modelToJSONString];
@@ -131,10 +143,15 @@
     MyLog(@"extendMessage:%@",str);
     option.extendMessage = str;
     
-    NSString *tchName = [dic valueForKey:@"tch_name"];
-    option.apnsContent = [NSString stringWithFormat:@"来自用户%@语音通话请求",kIsEmptyString(tchName)?@"":tchName];
-    option.apnsSound = @"audio_connect.mp3";
+    NSString *contentStr = [NSString stringWithFormat:@"%@向你发起了一个音频通话请求",[dic valueForKey:@"tch_name"]];
+    option.apnsContent = contentStr;
     option.apnsWithPrefix = NO;
+    
+    NSDictionary *alertDict = [[NSDictionary alloc] initWithObjectsAndKeys:contentStr,@"body",nil];
+    NSDictionary *apsDict = [[NSDictionary alloc] initWithObjectsAndKeys:alertDict,@"alert",@"audio_connect.mp3",@"sound",nil];
+    NSDictionary *payload = [[NSDictionary alloc] initWithObjectsAndKeys:apsDict,@"apsField",@"audioCall",@"cate", nil];
+    MyLog(@"payload:%@",payload);
+    option.apnsPayload = payload;
     
     kSelfWeak;
     [[NIMAVChatSDK sharedSDK].netCallManager start:callees type:NIMNetCallMediaTypeAudio option:option completion:^(NSError * _Nullable error, UInt64 callID) {
@@ -142,6 +159,7 @@
             weakSelf.callInfo.callID = callID;
             
              MyLog(@"你正在向 %@ 发起语音通话请求，callID:%lld",weakSelf.callInfo.callee,callID);
+             [NSUserDefaultsInfos putKey:kCallingForID andValue:[NSNumber numberWithUnsignedLongLong:callID]];
             
             if (!myTimer) {
                 timeCount = 0;
@@ -172,6 +190,7 @@
                 tutorialVC.callInfo = weakSelf.callInfo;
                 [weakSelf.navigationController pushViewController:tutorialVC animated:YES];
             }else{
+                isOtherCalling = NO;
                 [weakSelf.view makeToast:@"你拒绝了对方的语音通话请求" duration:1.0 position:CSToastPositionCenter];
                 [weakSelf hangUp];
             }
@@ -185,6 +204,7 @@
 
 #pragma mark 挂断
 -(void)hangUp{
+    [NSUserDefaultsInfos removeObjectForKey:kCallingForID];
     [[NIMAVChatSDK sharedSDK].netCallManager hangup:self.callInfo.callID];
     kSelfWeak;
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -252,8 +272,16 @@
     if (timeCount==DelaySelfStartControlWarningTime) { //10s
         [self.view makeToast:@"对方手机可能不在身边，请稍后再试" duration:1.0 position:CSToastPositionCenter];
     }else if (timeCount==DelaySelfStartControlTime){ //30s
-        [self onControl:[userInfo longLongValue] from:self.callInfo.callee type:NIMNetCallControlTypeBusyLine];
+        [self onControl:[userInfo longLongValue] from:self.callInfo.callee type:NIMNetCallControlTypeCloseAudio];
     }
+}
+
+#pragma mark 连线统计
+-(void)connectStudentForStaticsWithIndex:(NSInteger)index{
+    NSString *body = [NSString stringWithFormat:@"token=%@&third_id=%@&jobid=%@&sure=%ld",kUserTokenValue,self.homework.third_id,self.homework.job_id,index];
+    [TCHttpRequest postMethodWithoutLoadingForURL:kConnectAPI body:body success:^(id json) {
+        
+    }];
 }
 
 #pragma mark -- NIMNetCallManagerDelegate
@@ -271,7 +299,6 @@
                 kSelfWeak;
                 NSString *body = [NSString stringWithFormat:@"token=%@&jobid=%@",kUserTokenValue,self.homework.job_id];
                 [TCHttpRequest postMethodWithURL:self.isGuideNow?kJobAcceptAPI:kJobTutoringAPI body:body success:^(id json) {
-                    [ZYHelper sharedZYHelper].isUpdateHome = YES;
                     dispatch_sync(dispatch_get_main_queue(), ^{
                         JobTutorialViewController *tutoringVC = [[JobTutorialViewController alloc] init];
                         self.homework.label =[NSNumber numberWithInteger:3];
@@ -281,46 +308,62 @@
                     });
                 }];
             }
+            [self connectStudentForStaticsWithIndex:1];
         }else{
+            [self connectStudentForStaticsWithIndex:2];
             [self.view makeToast:@"对方拒绝了你的语音通话请求" duration:1.0 position:CSToastPositionCenter];
             [self hangUp];
         }
     }
 }
 
+
 #pragma mark 收到对方网络通话控制信息，用于方便通话双方沟通信息
 -(void)onControl:(UInt64)callID from:(NSString *)user type:(NIMNetCallControlType)control{
     MyLog(@"收到对方网络通话控制信息,control:%zd",control);
-    if (user == [[NIMSDK sharedSDK].loginManager currentAccount]) {
-        //多端登录时，自己会收到自己发出的控制指令，这里忽略他
-        return;
-    }
-    
-    if (callID != self.callInfo.callID) {
-        return;
-    }
-    
-    if (control == NIMNetCallControlTypeBusyLine) {
-        [self.view makeToast:@"暂时无人接听" duration:1.0 position:CSToastPositionCenter];
-        [self hangUp];
+    if (callID == self.callInfo.callID) {
+        if (user == [[NIMSDK sharedSDK].loginManager currentAccount]) {
+            //多端登录时，自己会收到自己发出的控制指令，这里忽略他
+            return;
+        }
+        
+        if (callID != self.callInfo.callID) {
+            return;
+        }
+        
+        if (control == NIMNetCallControlTypeBusyLine) {
+            [self connectStudentForStaticsWithIndex:5];
+            [self.view makeToast:@"对方正在辅导中，请稍后再试" duration:1.0 position:CSToastPositionCenter];
+            [self hangUp];
+        }else if (control == NIMNetCallControlTypeCloseAudio){
+            [self connectStudentForStaticsWithIndex:4];
+            [self.view makeToast:@"暂时无人接听" duration:1.0 position:CSToastPositionCenter];
+            [self hangUp];
+        }
     }
 }
 
 #pragma mark 对方挂断电话
 -(void)onHangup:(UInt64)callID by:(NSString *)user{
-    MyLog(@"对方挂断电话--onHangup");
-    [self.view makeToast:@"对方挂断电话" duration:1.0 position:CSToastPositionCenter];
-    [self hangUp];
+    MyLog(@"对方挂断电话--onHangup,callID:%lld",callID);
+    if (callID == self.callInfo.callID&&isOtherCalling) {
+        [[NTESAVNotifier sharedNTESAVNotifier] stopVibrate];
+        [self.view makeToast:@"对方取消连线" duration:1.0 position:CSToastPositionCenter];
+        [self hangUp];
+    }
 }
 
 #pragma mark 通话异常断开
 -(void)onCallDisconnected:(UInt64)callID withError:(NSError *)error{
-    MyLog(@"通话异常断开--error:%@",error.localizedDescription);
-    [self.view makeToast:@"连接异常断开，请重新连接" duration:1.0 position:CSToastPositionCenter];
-    kSelfWeak;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [weakSelf hangUp];
-    });
+    MyLog(@"通话异常断开--callID:%lld, error:%@",callID,error.localizedDescription);
+     if (callID == self.callInfo.callID) {
+        [self.view makeToast:@"连接异常断开，请重新连接" duration:1.0 position:CSToastPositionCenter];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [self hangUp];
+        });
+     }
 }
+
+
 
 @end

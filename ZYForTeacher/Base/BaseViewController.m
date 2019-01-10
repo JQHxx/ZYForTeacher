@@ -8,6 +8,8 @@
 
 #import "BaseViewController.h"
 #import "UIViewController+MMDrawerController.h"
+#import "SVProgressHUD.h"
+
 
 @interface BaseViewController ()<UIImagePickerControllerDelegate,UINavigationControllerDelegate>{
     UIView        *navView;
@@ -38,10 +40,19 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
+    
+    if (!kIsEmptyString(self.baseTitle)) {
+        [MobClick beginLogPageView:self.baseTitle];
+    }
 }
 
 -(void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
+    if (!kIsEmptyString(self.baseTitle)) {
+        [MobClick endLogPageView:self.baseTitle];
+    }
+    
+    [SVProgressHUD dismiss];
 }
 
 #pragma mark 状态栏样式
@@ -74,21 +85,22 @@
     navView.backgroundColor=kSystemColor;
     [self.view addSubview:navView];
     
-    backBtn=[[UIButton alloc] initWithFrame:CGRectMake(5,KStatusHeight + 2, 40, 40)];
-    [backBtn setImage:[UIImage drawImageWithName:@"return"size:CGSizeMake(10, 17)] forState:UIControlStateNormal];
+    backBtn=[[UIButton alloc] initWithFrame:IS_IPAD?CGRectMake(10, KStatusHeight+9, 50, 50):CGRectMake(5,KStatusHeight + 2, 40, 40)];
+    [backBtn setImage:[UIImage drawImageWithName:@"return"size:IS_IPAD?CGSizeMake(13, 23):CGSizeMake(12, 18)] forState:UIControlStateNormal];
     [backBtn setImageEdgeInsets:UIEdgeInsetsMake(0,-10.0, 0, 0)];
     [backBtn addTarget:self action:@selector(leftNavigationItemAction) forControlEvents:UIControlEventTouchUpInside];
     [navView addSubview:backBtn];
     
-    titleLabel =[[UILabel alloc] initWithFrame:CGRectMake((kScreenWidth-180)/2, KStatusHeight+12, 180, 22)];
+    titleLabel =[[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake((kScreenWidth-280)/2.0, KStatusHeight+16, 280, 36):CGRectMake((kScreenWidth-180)/2, KStatusHeight+12, 180, 22)];
     titleLabel.textColor=[UIColor colorWithHexString:@"#4A4A4A"];
-    titleLabel.font=[UIFont pingFangSCWithWeight:FontWeightStyleMedium size:18];
+    titleLabel.font=[UIFont pingFangSCWithWeight:FontWeightStyleMedium size:IS_IPAD?25:18];
     titleLabel.textAlignment=NSTextAlignmentCenter;
     [navView addSubview:titleLabel];
     
-    self.rightBtn=[[UIButton alloc] initWithFrame:CGRectMake(kScreenWidth-40, KStatusHeight+10, 35, 32)];
+    self.rightBtn=[[UIButton alloc] initWithFrame:IS_IPAD?CGRectMake(kScreenWidth-60, KStatusHeight+9,50,50):CGRectMake(kScreenWidth-45, KStatusHeight+2, 40, 40)];
     [self.rightBtn addTarget:self action:@selector(rightNavigationItemAction) forControlEvents:UIControlEventTouchUpInside];
     [navView addSubview:self.rightBtn];
+    self.rightBtn.timeInterval = 2.0;
     
     topShawView = [[UIImageView alloc] initWithFrame:CGRectMake(0, kNavHeight, kScreenWidth,6)];
     topShawView.image = [UIImage imageNamed:@"top_shadow"];
@@ -96,7 +108,7 @@
 }
 
 #pragma mark  上传照片
--(void)addPhoto{
+-(void)addPhotoForView:(UIView *)view {
     NSString *cancelButtonTitle = NSLocalizedString(@"取消", nil);
     NSString *cameraButtonTitle = NSLocalizedString(@"拍照", nil);
     NSString *photoButtonTitle = NSLocalizedString(@"从手机相册选择", nil);
@@ -112,7 +124,6 @@
             self.imgPicker=[[UIImagePickerController alloc]init];
             self.imgPicker.sourceType=UIImagePickerControllerSourceTypeCamera;
             self.imgPicker.delegate=self;
-            self.imgPicker.allowsEditing=YES;
             if ([[[UIDevice currentDevice] systemVersion] floatValue]>=8.0) {
                 self.modalPresentationStyle=UIModalPresentationOverCurrentContext;
             }
@@ -125,7 +136,6 @@
         self.imgPicker=[[UIImagePickerController alloc]init];
         self.imgPicker.sourceType=UIImagePickerControllerSourceTypePhotoLibrary;
         self.imgPicker.delegate=self;
-        self.imgPicker.allowsEditing=YES;
         if ([[[UIDevice currentDevice] systemVersion] floatValue]>=8.0) {
             self.modalPresentationStyle=UIModalPresentationOverCurrentContext;
         }
@@ -136,7 +146,14 @@
     [alertController addAction:cameraAction];
     [alertController addAction:photoAction];
     
-    [self presentViewController:alertController animated:YES completion:nil];
+    if (IS_IPAD) {
+        UIPopoverPresentationController *popPresenter = [alertController  popoverPresentationController];
+        popPresenter.sourceView = view;
+        popPresenter.sourceRect = view.bounds;
+        [self presentViewController:alertController animated:YES completion:nil];
+    }else{
+       [self presentViewController:alertController animated:YES completion:nil];
+    }
 }
 
 #pragma mark 跳转处理
@@ -169,7 +186,7 @@
     _leftImageName=leftImageName;
     if (_leftImageName) {
         backBtn.hidden=NO;
-        [backBtn setImage:[UIImage drawImageWithName:_leftImageName size:CGSizeMake(20, 20)] forState:UIControlStateNormal];
+        [backBtn setImage:[UIImage drawImageWithName:_leftImageName size:IS_IPAD?CGSizeMake(32, 32):CGSizeMake(24, 24)] forState:UIControlStateNormal];
         [backBtn setImageEdgeInsets:UIEdgeInsetsZero];
     }
 }
@@ -178,7 +195,7 @@
     _leftTitleName = leftTitleName;
     [backBtn setTitle:leftTitleName forState:UIControlStateNormal];
     [backBtn setTitleColor:[UIColor colorWithHexString:@"#4A4A4A"] forState:UIControlStateNormal];
-    backBtn.titleLabel.font=[UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+    backBtn.titleLabel.font=[UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?24:16];
     backBtn.titleLabel.textAlignment=NSTextAlignmentCenter;
     [backBtn setImage:[UIImage imageNamed:@""] forState:UIControlStateNormal];
 }
@@ -186,7 +203,7 @@
 #pragma mark 设置导航栏右侧按钮图片
 -(void)setRightImageName:(NSString *)rightImageName{
     _rightImageName=rightImageName;
-    [self.rightBtn setImage:[UIImage drawImageWithName:rightImageName size:CGSizeMake(24, 24)] forState:UIControlStateNormal];
+    [self.rightBtn setImage:[UIImage drawImageWithName:rightImageName size:IS_IPAD?CGSizeMake(34, 28):CGSizeMake(24, 20)] forState:UIControlStateNormal];
 }
 
 #pragma mark 设置导航栏右侧按钮文字
@@ -195,10 +212,10 @@
     [self.rightBtn setTitle:rigthTitleName forState:UIControlStateNormal];
     [self.rightBtn setTitleColor:[UIColor colorWithHexString:@"#4A4A4A"] forState:UIControlStateNormal];
     if (rigthTitleName.length>=4) {
-        CGSize size = [rigthTitleName sizeWithLabelWidth:kScreenWidth font:[UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16]];
-        self.rightBtn.frame = CGRectMake(kScreenWidth-size.width-10,KStatusHeight +5, size.width, 32);
+        CGSize size = [rigthTitleName sizeWithLabelWidth:kScreenWidth font:[UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?24:16]];
+        self.rightBtn.frame =IS_IPAD?CGRectMake(kScreenWidth-size.width-20, KStatusHeight+16,size.width,36):CGRectMake(kScreenWidth-size.width-10,KStatusHeight +5, size.width, 32);
     }
-    self.rightBtn.titleLabel.font=[UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+    self.rightBtn.titleLabel.font=[UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?24:16];
     self.rightBtn.titleLabel.textAlignment=NSTextAlignmentCenter;
 }
 

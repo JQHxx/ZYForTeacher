@@ -21,17 +21,19 @@
     if (self) {
         self.layer.cornerRadius = 21.0;
         self.backgroundColor = [UIColor colorWithHexString:@"#FFA8A8"];
-        
-        self.imgView = [[UIImageView alloc] initWithFrame:CGRectMake(24,9.0, 20, 24)];
+        CGRect imgRect = IS_IPAD?CGRectMake(31, 12, 24, 32):CGRectMake(24, 9.0, 20, 24);
+        self.imgView = [[UIImageView alloc] initWithFrame:imgRect];
         self.imgView.image = [UIImage imageNamed:icon];
         [self addSubview:self.imgView];
         
-        self.myText = [[UITextField alloc] initWithFrame:CGRectMake(self.imgView.right+10, 10.0, frame.size.width -self.imgView.right-20, 22.0)];
-        self.myText.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:16.0];
+        CGRect textRect = IS_IPAD?CGRectMake(self.imgView.right+15, 13,frame.size.width -self.imgView.right-30, 30):CGRectMake(self.imgView.right+10, 10.0, frame.size.width -self.imgView.right-20, 22.0);
+        CGFloat fontSize = IS_IPAD?22.0:16.0;
+        self.myText = [[UITextField alloc] initWithFrame:textRect];
+        self.myText.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:fontSize];
         
         NSMutableAttributedString *attributePlaceholder = [[NSMutableAttributedString alloc] initWithString:placeholder];
         [attributePlaceholder addAttribute:NSForegroundColorAttributeName value:[UIColor whiteColor] range:NSMakeRange(0, placeholder.length)];
-        [attributePlaceholder addAttribute:NSFontAttributeName value:[UIFont pingFangSCWithWeight:FontWeightStyleMedium size:16.0] range:NSMakeRange(0, placeholder.length)];
+        [attributePlaceholder addAttribute:NSFontAttributeName value:[UIFont pingFangSCWithWeight:FontWeightStyleMedium size:fontSize] range:NSMakeRange(0, placeholder.length)];
         self.myText.attributedPlaceholder = attributePlaceholder;
         self.myText.textColor = [UIColor whiteColor];
         [self addSubview:self.myText];

@@ -11,6 +11,8 @@
 
 #define kBtnCapW (kScreenWidth-140-85)/2.0
 
+#define kIpadBtnCapW (kScreenWidth-106*2-165)/2.0
+
 @interface MyConnecttingViewController ()<UIScrollViewDelegate,SDPhotoBrowserDelegate>{
     NSInteger   allNum;
     UILabel     *countLab;
@@ -39,6 +41,20 @@
     
     [self initConnecttingView];
     [self loadMyConnecttingView];
+    
+    [NSUserDefaultsInfos putKey:kCallingForID andValue:[NSNumber numberWithUnsignedLongLong:self.callInfo.callID]];
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    
+    [MobClick beginLogPageView:@"被连线"];
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    
+    [MobClick endLogPageView:@"被连线"];
 }
 
 #pragma mark -- Delegate
@@ -68,6 +84,7 @@
 #pragma mark -- Event Response
 #pragma mark 取消
 -(void)refuseConnecttingAction{
+    [NSUserDefaultsInfos removeObjectForKey:kCallingForID];
     [self responseFromCallWithAccept:NO];
 }
 
@@ -104,7 +121,7 @@
     
     [self.view addSubview:self.rootView];
     
-    UIImageView *bgHeadImageView = [[UIImageView alloc] initWithFrame:CGRectMake((kScreenWidth-120)/2.0,kScreenHeight-420-60,120,120)];
+    UIImageView *bgHeadImageView = [[UIImageView alloc] initWithFrame:IS_IPAD?CGRectMake((kScreenWidth-120)/2.0, self.rootView.top+27, 120, 120):CGRectMake((kScreenWidth-130)/2.0,kScreenHeight-420-65,130,130)];
     bgHeadImageView.image = [UIImage imageNamed:@"connection_head_image_white"];
     [self.view addSubview:bgHeadImageView];
     [self.view addSubview:self.headImageView];
@@ -113,7 +130,7 @@
     [self.rootView addSubview:self.gradeLabel];
     [self.rootView addSubview:self.priceLabel];
     
-    UIView *line2= [[UIView alloc] initWithFrame:CGRectMake(26,self.priceLabel.bottom+32,kScreenWidth-51, 0.5)];
+    UIView *line2= [[UIView alloc] initWithFrame:IS_IPAD?CGRectMake(40,self.priceLabel.bottom+38.0, kScreenWidth-80, 0.5):CGRectMake(26,self.priceLabel.bottom+32,kScreenWidth-51, 0.5)];
     line2.backgroundColor  = [UIColor colorWithHexString:@"#D8D8D8"];
     [self.rootView addSubview:line2];
     
@@ -168,9 +185,9 @@
 #pragma mark
 -(UIView *)rootView{
     if (!_rootView) {
-        _rootView = [[UIView alloc] initWithFrame:CGRectMake(0,kScreenHeight-420, kScreenWidth, 420)];
+        _rootView = [[UIView alloc] initWithFrame:IS_IPAD?CGRectMake(0, kScreenHeight-645, kScreenWidth, 645):CGRectMake(0,kScreenHeight-420, kScreenWidth, 420)];
         _rootView.backgroundColor = [UIColor whiteColor];
-        [_rootView drawBorderRadisuWithType:BoderRadiusTypeAll boderRadius:8.0];
+        [_rootView drawBorderRadisuWithType:BoderRadiusTypeAll boderRadius:IS_IPAD?12:8.0];
     }
     return _rootView;
 }
@@ -178,8 +195,8 @@
 #pragma mark 头像
 -(UIImageView *)headImageView{
     if (!_headImageView) {
-        _headImageView = [[UIImageView alloc] initWithFrame:CGRectMake((kScreenWidth - 110)/2.0,kScreenHeight-420-55, 110, 110)];
-        _headImageView.boderRadius = 55.0;
+        _headImageView = [[UIImageView alloc] initWithFrame:IS_IPAD?CGRectMake((kScreenWidth-96.0)/2.0, self.rootView.top+35, 96.0, 96.0):CGRectMake((kScreenWidth - 110)/2.0,kScreenHeight-420-55, 110, 110)];
+        _headImageView.boderRadius = IS_IPAD?48.0:55.0;
     }
     return _headImageView;
 }
@@ -187,9 +204,9 @@
 #pragma mark 姓名
 -(UILabel *)nameLabel{
     if (!_nameLabel) {
-        _nameLabel = [[UILabel alloc] initWithFrame:CGRectMake(40,70, kScreenWidth-80, 25)];
+        _nameLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(60, 156, kScreenWidth-120, 40):CGRectMake(40,70, kScreenWidth-80, 25)];
         _nameLabel.textAlignment = NSTextAlignmentCenter;
-        _nameLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:18];
+        _nameLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:IS_IPAD?28:18];
         _nameLabel.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
     }
     return _nameLabel;
@@ -198,8 +215,8 @@
 #pragma mark 年级/科目
 -(UILabel *)gradeLabel{
     if (!_gradeLabel) {
-        _gradeLabel = [[UILabel alloc] initWithFrame:CGRectMake(40, self.nameLabel.bottom,kScreenWidth-80, 25)];
-        _gradeLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:14];
+        _gradeLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(60,self.nameLabel.bottom, kScreenWidth-120, 30):CGRectMake(40, self.nameLabel.bottom,kScreenWidth-80, 25)];
+        _gradeLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?22:14];
         _gradeLabel.textColor = [UIColor colorWithHexString:@"#808080"];
         _gradeLabel.textAlignment = NSTextAlignmentCenter;
     }
@@ -209,8 +226,8 @@
 #pragma mark 辅导价格
 -(UILabel *)priceLabel{
     if (!_priceLabel) {
-        _priceLabel = [[UILabel alloc] initWithFrame:CGRectMake(40, self.gradeLabel.bottom+4, kScreenWidth-80, 20)];
-        _priceLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:14];
+        _priceLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(60,self.gradeLabel.bottom+5, kScreenWidth-120, 30):CGRectMake(40, self.gradeLabel.bottom+4, kScreenWidth-80, 20)];
+        _priceLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:IS_IPAD?22:14];
         _priceLabel.textColor = [UIColor colorWithHexString:@"#FF6161"];
         _priceLabel.textAlignment = NSTextAlignmentCenter;
     }
@@ -220,8 +237,8 @@
 #pragma mark 连线
 -(UILabel *)connecttingLabel{
     if (!_connecttingLabel) {
-        _connecttingLabel = [[UILabel alloc] initWithFrame:CGRectMake(60, self.priceLabel.bottom+66, kScreenWidth-120, 20)];
-        _connecttingLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:14];
+        _connecttingLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(60, self.priceLabel.bottom+70, kScreenWidth-120, 30):CGRectMake(60, self.priceLabel.bottom+66, kScreenWidth-120, 20)];
+        _connecttingLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?22:14];
         _connecttingLabel.textColor = [UIColor colorWithHexString:@"#808080"];
         _connecttingLabel.text = @"对方正在请求与你连线...";
         _connecttingLabel.textAlignment = NSTextAlignmentCenter;
@@ -232,11 +249,11 @@
 #pragma mark 拒绝
 -(UIButton *)refuseButton{
     if (!_refuseButton) {
-        _refuseButton = [[UIButton alloc] initWithFrame:CGRectMake(kBtnCapW, self.connecttingLabel.bottom+39, 69, 100)];
-        [_refuseButton setImage:[UIImage imageNamed:@"connection_cancel"] forState:UIControlStateNormal];
+        _refuseButton = [[UIButton alloc] initWithFrame:IS_IPAD?CGRectMake(kIpadBtnCapW, self.connecttingLabel.bottom+49, 106, 154):CGRectMake(kBtnCapW, self.connecttingLabel.bottom+39, 69, 100)];
+        [_refuseButton setImage:IS_IPAD?[UIImage imageNamed:@"connection_cancel_ipad"]:[UIImage imageNamed:@"connection_cancel"] forState:UIControlStateNormal];
         [_refuseButton setTitle:@"拒绝" forState:UIControlStateNormal];
         [_refuseButton setTitleColor:[UIColor colorWithHexString:@"#4A4A4A"] forState:UIControlStateNormal];
-        _refuseButton.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleSemibold size:16];
+        _refuseButton.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleSemibold size:IS_IPAD?25:16];
         _refuseButton.imageEdgeInsets = UIEdgeInsetsMake(-(_refuseButton.height - _refuseButton.titleLabel.height- _refuseButton.titleLabel.frame.origin.y-9),0, 0, 0);
         _refuseButton.titleEdgeInsets = UIEdgeInsetsMake(_refuseButton.imageView.height+_refuseButton.imageView.frame.origin.y, -_refuseButton.imageView.width, 0, 0);
         [_refuseButton addTarget:self action:@selector(refuseConnecttingAction) forControlEvents:UIControlEventTouchUpInside];
@@ -247,11 +264,11 @@
 #pragma mark 接受
 -(UIButton *)acceptButton{
     if (!_acceptButton) {
-        _acceptButton = [[UIButton alloc] initWithFrame:CGRectMake(kScreenWidth-kBtnCapW-69, self.connecttingLabel.bottom+39, 69, 100)];
-        [_acceptButton setImage:[UIImage imageNamed:@"connection_accept"] forState:UIControlStateNormal];
+        _acceptButton = [[UIButton alloc] initWithFrame:IS_IPAD?CGRectMake(kScreenWidth-kIpadBtnCapW-106, self.connecttingLabel.bottom+49, 106, 154):CGRectMake(kScreenWidth-kBtnCapW-69, self.connecttingLabel.bottom+39, 69, 100)];
+        [_acceptButton setImage:IS_IPAD?[UIImage imageNamed:@"connection_accept_ipad"]:[UIImage imageNamed:@"connection_accept"] forState:UIControlStateNormal];
         [_acceptButton setTitle:@"接受" forState:UIControlStateNormal];
         [_acceptButton setTitleColor:[UIColor colorWithHexString:@"#4A4A4A"] forState:UIControlStateNormal];
-        _acceptButton.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleSemibold size:16];
+        _acceptButton.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleSemibold size:IS_IPAD?25:16];
         _acceptButton.imageEdgeInsets = UIEdgeInsetsMake(-(_acceptButton.height - _acceptButton.titleLabel.height- _acceptButton.titleLabel.frame.origin.y-9),0, 0, 0);
         _acceptButton.titleEdgeInsets = UIEdgeInsetsMake(_acceptButton.imageView.height+_acceptButton.imageView.frame.origin.y, -_acceptButton.imageView.width, 0, 0);
         [_acceptButton addTarget:self action:@selector(acceptConnecttingAction) forControlEvents:UIControlEventTouchUpInside];

@@ -9,7 +9,6 @@
 #import "LoginViewController.h"
 #import "RegisterViewController.h"
 #import "AppDelegate.h"
-#import "UserAgreementViewController.h"
 #import "GetCodeViewController.h"
 #import "AppDelegate.h"
 #import "CustomTextView.h"
@@ -20,6 +19,8 @@
 #import "IdentitySettingViewController.h"
 #import <NIMSDK/NIMSDK.h>
 #import <UMPush/UMessage.h>
+#import "UserInfoViewController.h"
+#import "TeachInfoViewController.h"
 
 @interface LoginViewController ()<UITextFieldDelegate>
 
@@ -38,6 +39,18 @@
     self.isHiddenNavBar = YES;
     
     [self initLoginView];
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    
+    [MobClick beginLogPageView:@"登录"];
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    
+    [MobClick endLogPageView:@"登录"];
 }
 
 #pragma mark 状态栏
@@ -98,10 +111,22 @@
         [NSUserDefaultsInfos putKey:kAuthIdentidy andValue:model.auth_id];   //实名认证
         [NSUserDefaultsInfos putKey:kAuthEducation andValue:model.auth_edu];  //学历认证
         
-        if (!kIsEmptyString(model.trait)&&!kIsEmptyString(model.tch_name)&!kIsEmptyString(model.subject)) {
-            NSMutableDictionary *userDict = [[NSMutableDictionary alloc] initWithObjectsAndKeys:model.tid,@"tch_id",model.trait,@"trait",model.tch_name,@"tch_name",model.grade,@"grade",model.subject,@"subject",model.score,@"score",model.guide_price,@"guide_price",model.guide_time,@"guide_time",model.check_num,@"check_num",nil];
-            [NSUserDefaultsInfos putKey:kUserInfo anddict:userDict];
+        NSMutableDictionary *userDict = [[NSMutableDictionary alloc] init];
+        [userDict setObject:model.tid forKey:@"tch_id"];
+        if (!kIsEmptyString(model.trait)&&!kIsEmptyString(model.tch_name)) {
+            [userDict setObject:model.trait forKey:@"trait"];
+            [userDict setObject:model.tch_name forKey:@"tch_name"];
         }
+        if (!kIsEmptyString(model.subject)&&model.grade.count>0) {
+            [userDict setObject:model.subject forKey:@"subject"];
+            [userDict setObject:model.grade forKey:@"grade"];
+        }
+        [userDict setObject:model.score forKey:@"score"];
+        [userDict setObject:model.guide_price forKey:@"guide_price"];
+        [userDict setObject:model.guide_time forKey:@"guide_time"];
+        [userDict setObject:model.check_num forKey:@"check_num"];
+        [NSUserDefaultsInfos putKey:kUserInfo anddict:userDict];
+        
         
         //登录网易云
         [[[NIMSDK sharedSDK] loginManager] login:model.third_id token:model.third_token completion:^(NSError * _Nullable error) {
@@ -135,14 +160,28 @@
         }];
         
         dispatch_sync(dispatch_get_main_queue(), ^{
-            if ([model.tch_label integerValue]==0||kIsEmptyString(model.trait)||kIsEmptyString(model.tch_name)||[model.edu_stage integerValue]==0||model.grade.count==0||kIsEmptyString(model.subject)) {
+            if ([model.tch_label integerValue]==0) { //未设置身份
                 IdentitySettingViewController *identitySettingVC = [[IdentitySettingViewController alloc] init];
                 identitySettingVC.model = model;
                 [weakSelf.navigationController pushViewController:identitySettingVC animated:YES];
-            }else{
-                [NSUserDefaultsInfos putKey:kIsLogin andValue:[NSNumber numberWithBool:YES]];
-                AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-                [appDelegate setMyRootViewController];
+            }else{ //已设置身份
+                if (kIsEmptyString(model.trait)||kIsEmptyString(model.tch_name)||[model.sex integerValue]<1||[model.birthday integerValue]==0||kIsEmptyString(model.province)||kIsEmptyString(model.intro)) { //未填写个人信息
+                    UserInfoViewController *userInfoVC = [[UserInfoViewController alloc] init];
+                    userInfoVC.isLoginIn = YES;
+                    userInfoVC.userModel = model;
+                    [weakSelf.navigationController pushViewController:userInfoVC animated:YES];
+                }else{ //已填写个人信息
+                    if ([model.edu_stage integerValue]==0||model.grade.count==0||kIsEmptyString(model.subject)) { //未设置教学信息
+                        TeachInfoViewController *teachInfoVC = [[TeachInfoViewController alloc] init];
+                        teachInfoVC.isLoginIn = YES;
+                        teachInfoVC.user = model;
+                        [weakSelf.navigationController pushViewController:teachInfoVC animated:YES];
+                    }else{ //已设置教学信息
+                        [NSUserDefaultsInfos putKey:kIsLogin andValue:[NSNumber numberWithBool:YES]];
+                        AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+                        [appDelegate setMyRootViewController];
+                    }
+                }
             }
        });
     }];
@@ -190,7 +229,13 @@
 #pragma mark 初始化界面
 -(void)initLoginView{
     UIImageView *imgView=[[UIImageView alloc] initWithFrame:self.view.bounds];
-    imgView.image =  [UIImage imageNamed:isIPhoneX?@"login_background_x":@"login_background"];
+    NSString *imgname;
+    if (IS_IPAD) {
+        imgname= @"login_background_ipad";
+    }else{
+        imgname = isXDevice?@"login_background_x":@"login_background";
+    }
+    imgView.image =  [UIImage imageNamed:imgname];
     [self.view addSubview:imgView];
     
     [self.view addSubview:self.phoneTextView];
@@ -204,17 +249,21 @@
     [self.view addSubview:self.loginButton];
     
     NSArray *btnTitles = @[@"立即注册",@"忘记密码"];
+    CGFloat btnHeight = IS_IPAD?30:20;
     for (NSInteger i=0; i<btnTitles.count; i++) {
-        UIButton *btn = [[UIButton alloc] initWithFrame:CGRectMake(kScreenWidth/2-100+120*i,self.loginButton.bottom + 24, 80, 20)];
+        
+        CGFloat fontSize = IS_IPAD?22.0:14.0;
+        UIButton *btn = [[UIButton alloc] initWithFrame:CGRectMake(kScreenWidth/2-120+140*i,self.loginButton.bottom + 24, 100, btnHeight)];
         [btn setTitle:btnTitles[i] forState:UIControlStateNormal];
-        btn.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:14];
+        btn.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:fontSize];
+        btn.titleLabel.textAlignment =NSTextAlignmentCenter;
         btn.tag = i+100;
         [btn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         [btn addTarget:self action:@selector(btnClickAction:) forControlEvents:UIControlEventTouchUpInside];
         [self.view addSubview:btn];
     }
     
-    UILabel *line = [[UILabel alloc] initWithFrame:CGRectMake(kScreenWidth/2, self.loginButton.bottom+24, 1, 20)];
+    UILabel *line = [[UILabel alloc] initWithFrame:CGRectMake(kScreenWidth/2, self.loginButton.bottom+24, 1, btnHeight)];
     line.backgroundColor = [UIColor whiteColor];
     [self.view addSubview:line];
 }
@@ -223,8 +272,13 @@
 #pragma mark 手机号
 -(CustomTextView *)phoneTextView{
     if (!_phoneTextView) {
-        CGFloat originX = kScreenWidth<375?kScreenHeight-330:kScreenHeight-382;
-        _phoneTextView = [[CustomTextView alloc] initWithFrame:CGRectMake(48, originX, kScreenWidth-95, 42) placeholder:@"请输入手机号码" icon:@"login_phone" isNumber:YES];
+        CGRect phoneFrame;
+        if (IS_IPAD) {
+            phoneFrame = CGRectMake(127, 512, kScreenWidth-253, 55);
+        }else{
+            phoneFrame = kScreenWidth<375?CGRectMake(48, kScreenHeight-330, kScreenWidth-95, 42):CGRectMake(48, kScreenHeight-382, kScreenWidth-95, 42);
+        }
+        _phoneTextView = [[CustomTextView alloc] initWithFrame:phoneFrame placeholder:@"请输入手机号码" icon:@"login_phone" isNumber:YES];
         _phoneTextView.myText.delegate = self;
     }
     return _phoneTextView;
@@ -233,10 +287,18 @@
 #pragma mark 密码
 -(CustomTextView *)passwordTextView{
     if (!_passwordTextView) {
-        _passwordTextView = [[CustomTextView alloc] initWithFrame:CGRectMake(48, self.phoneTextView.bottom+37, kScreenWidth - 95, 42) placeholder:@"请输入密码" icon:@"login_password"  isNumber:NO];
+        CGRect psdFrame;
+        if (IS_IPAD) {
+            psdFrame = CGRectMake(127,self.phoneTextView.bottom+50, kScreenWidth-253, 55);
+        }else{
+            psdFrame = CGRectMake(48,self.phoneTextView.bottom+37, kScreenWidth-95, 42);
+        }
+        _passwordTextView = [[CustomTextView alloc] initWithFrame:psdFrame placeholder:@"请输入密码" icon:@"login_password"  isNumber:NO];
         _passwordTextView.myText.delegate = self;
         _passwordTextView.myText.keyboardType = UIKeyboardTypeASCIICapable;
         _passwordTextView.myText.secureTextEntry = YES;
+        
+        
     }
     return _passwordTextView;
 }
@@ -244,9 +306,21 @@
 #pragma mark 设置可见
 -(UIButton *)visibleButton{
     if (!_visibleButton) {
-        _visibleButton = [[UIButton alloc] initWithFrame:CGRectMake(kScreenWidth-82,self.passwordTextView.top+13, 27, 16)];
-        [_visibleButton setImage:[UIImage imageNamed:@"login_password_hide"] forState:UIControlStateNormal];
-        [_visibleButton setImage:[UIImage imageNamed:@"login_password_show"] forState:UIControlStateSelected];
+        CGRect visFrame;
+        UIImage *normalImage;
+        UIImage *selimage;
+        if (IS_IPAD) {
+            visFrame = CGRectMake(kScreenWidth-182,self.passwordTextView.top+17, 35, 21);
+            normalImage = [UIImage drawImageWithName:@"login_password_hide_ipad" size:CGSizeMake(35, 21)];
+            selimage = [UIImage drawImageWithName:@"login_password_show_ipad" size:CGSizeMake(35, 21)];
+        }else{
+            visFrame = CGRectMake(kScreenWidth-82,self.passwordTextView.top+13, 27, 16);
+            normalImage = [UIImage drawImageWithName:@"login_password_hide" size:CGSizeMake(27, 16)];
+            selimage = [UIImage drawImageWithName:@"login_password_show" size:CGSizeMake(27, 16)];
+        }
+        _visibleButton = [[UIButton alloc] initWithFrame:visFrame];
+        [_visibleButton setImage:normalImage forState:UIControlStateNormal];
+        [_visibleButton setImage:selimage forState:UIControlStateSelected];
         [_visibleButton addTarget:self action:@selector(setPasswordVisibleAction:) forControlEvents:UIControlEventTouchUpInside];
     }
     return _visibleButton;
@@ -256,8 +330,18 @@
 #pragma mark 登录
 -(UIButton *)loginButton{
     if (!_loginButton) {
-        _loginButton = [[UIButton alloc] initWithFrame:CGRectMake((kScreenWidth-280)/2.0, self.passwordTextView.bottom+20, 280, 60)];
-        [_loginButton setImage:[UIImage imageNamed:@"button_login"] forState:UIControlStateNormal];
+        CGRect btnFrame;
+        if (IS_IPAD) {
+            btnFrame = CGRectMake((kScreenWidth-515)/2.0,self.passwordTextView.bottom+70,515, 75);
+        }else{
+            if (kScreenWidth<375.0) {
+                btnFrame = CGRectMake(40,self.passwordTextView.bottom+40,kScreenWidth-80,55);
+            }else{
+                btnFrame = CGRectMake((kScreenWidth-280)/2.0,self.passwordTextView.bottom+40,280, 55);
+            }
+        }
+        _loginButton = [[UIButton alloc] initWithFrame:btnFrame];
+        [_loginButton setImage:IS_IPAD?[UIImage drawImageWithName:@"button_login_ipad" size:CGSizeMake(515, 75)]:[UIImage imageNamed:@"button_login"] forState:UIControlStateNormal];
         [_loginButton addTarget:self action:@selector(loginAction) forControlEvents:UIControlEventTouchUpInside];
     }
     return _loginButton;

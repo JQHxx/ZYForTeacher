@@ -46,6 +46,9 @@ singleton_interface(TCHttpRequest)
 +(void)postMethodWithoutLoadingForURL:(NSString *)urlStr body:(NSString *)bodyStr success:(HttpSuccess)success;
 
 
+-(void)requstMethod:(NSString *)method url:(NSString *)urlStr body:(NSString *)body isLoading:(BOOL)isLoading success:(HttpSuccess)success failure:(HttpFailure)failure;
+
+
 +(NSString *)getValueWithParams:(id)params;
 
 /*

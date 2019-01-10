@@ -11,6 +11,7 @@
 #define kPhotoWidth  kScreenWidth-55
 #define kPhotoHeight (kScreenWidth-55)*(18.0/32.0)
 
+
 @interface VerifiedViewController ()<UITableViewDelegate,UITableViewDataSource,UITextFieldDelegate>{
     NSString       *nameStr;
     NSString       *numberStr;
@@ -30,7 +31,7 @@
     [super viewDidLoad];
     self.baseTitle = @"实名认证";
     
-    self.rigthTitleName = @"保存";
+    self.rigthTitleName = @"提交";
     
     [self.view addSubview:self.verifiedTableView];
     
@@ -51,14 +52,14 @@
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
     if (indexPath.row<2) {
         
-        UILabel *lab = [[UILabel alloc] initWithFrame:CGRectMake(24, 15, 65, 22)];
-        lab.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+        UILabel *lab = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(40, 20, 100, 36):CGRectMake(24, 15, 65, 22)];
+        lab.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?25:16];
         lab.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
         lab.text = indexPath.row==0?@"真实姓名":@"身份证号";
         [cell.contentView addSubview:lab];
         
-        UITextField *detailText = [[UITextField alloc] initWithFrame:CGRectMake(kScreenWidth-200, 15,183, 22)];
-        detailText.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+        UITextField *detailText = [[UITextField alloc] initWithFrame:IS_IPAD?CGRectMake(kScreenWidth-400, 20, 360, 36):CGRectMake(kScreenWidth-200, 15,183, 22)];
+        detailText.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?25:16];
         detailText.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
         detailText.returnKeyType = UIReturnKeyDone;
         detailText.delegate = self;
@@ -75,54 +76,54 @@
             detailText.keyboardType = UIKeyboardTypeNumbersAndPunctuation;
         }
    
-        UILabel *line = [[UILabel alloc] initWithFrame:CGRectMake(20, 49.5, kScreenWidth-20, 0.5)];
+        UILabel *line = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(40, 75.5, kScreenWidth-80, 0.5):CGRectMake(20, 49.5, kScreenWidth-20, 0.5)];
         line.backgroundColor = [UIColor colorWithHexString:@"#D8D8D8"];
         [cell.contentView addSubview:line];
     }else{
         
-        UILabel *titleLab = [[UILabel alloc] initWithFrame:CGRectMake(25, 15, 120, 22)];
-        titleLab.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+        UILabel *titleLab = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(40, 20, 200, 36):CGRectMake(25, 15, 120, 22)];
+        titleLab.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?25:16];
         titleLab.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
         titleLab.text = @"上传身份证照片";
         [cell.contentView addSubview:titleLab];
         
         NSArray *titles = @[@"(请上传身份证正面照片)",@"(请上传身份证反面照片)"];
         for (NSInteger i=0; i<2; i++) {
-            UIButton *addPhotoBtn =[[UIButton alloc] initWithFrame:CGRectMake(29,titleLab.bottom+14+i*(kPhotoHeight+40),kPhotoWidth,kPhotoHeight)];
+            UIButton *addPhotoBtn =[[UIButton alloc] initWithFrame:IS_IPAD?CGRectMake(138, titleLab.bottom+20+i*(276+62),kScreenWidth-276, 276):CGRectMake(29,titleLab.bottom+14+i*(kPhotoHeight+40),kPhotoWidth,kPhotoHeight)];
             addPhotoBtn.backgroundColor = [UIColor colorWithHexString:@"#F1F1F2"];
             addPhotoBtn.tag = i;
             [addPhotoBtn addTarget:self action:@selector(addVerifiedPhotoAction:) forControlEvents:UIControlEventTouchUpInside];
             [cell.contentView addSubview:addPhotoBtn];
             if (i==0) {
-                UIImage *fImage = frontImage?frontImage:[UIImage drawImageWithName:@"add_photo" size:CGSizeMake(49, 46)];
+                UIImage *fImage = frontImage?frontImage:[UIImage drawImageWithName:@"add_photo" size:IS_IPAD?CGSizeMake(70, 65):CGSizeMake(49, 46)];
                 [addPhotoBtn setImage:fImage forState:UIControlStateNormal];
                 
             }else{
-                UIImage *backImage = obverseImage?obverseImage:[UIImage drawImageWithName:@"add_photo" size:CGSizeMake(49, 46)];
+                UIImage *backImage = obverseImage?obverseImage:[UIImage drawImageWithName:@"add_photo" size:IS_IPAD?CGSizeMake(70, 65):CGSizeMake(49, 46)];
                 [addPhotoBtn setImage:backImage forState:UIControlStateNormal];
             }
             
-            UILabel *lab = [[UILabel alloc] initWithFrame:CGRectMake(25,addPhotoBtn.bottom+10,kScreenWidth-50, 20)];
-            lab.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:14];
+            UILabel *lab = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(80, addPhotoBtn.bottom+16, kScreenWidth-169, 30):CGRectMake(25,addPhotoBtn.bottom+10,kScreenWidth-50, 20)];
+            lab.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?22:14];
             lab.textColor = [UIColor colorWithHexString:@"#9B9B9B"];
             lab.textAlignment = NSTextAlignmentCenter;
             lab.text = titles[i];
             [cell.contentView addSubview:lab];
         }
         
-        UILabel *lab1 = [[UILabel alloc] initWithFrame:CGRectMake(25,titleLab.bottom+(kPhotoHeight+40)*2+30,100, 20)];
-        lab1.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:14];
+        UILabel *lab1 = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(50, titleLab.bottom+(276+62)*2+40, 150, 30):CGRectMake(25,titleLab.bottom+(kPhotoHeight+40)*2+30,100, 20)];
+        lab1.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?22:14];
         lab1.textColor = [UIColor colorWithHexString:@"#FF6161"];
         lab1.text = @"*实名要求";
         [cell.contentView addSubview:lab1];
         
         UILabel *lab = [[UILabel alloc] initWithFrame:CGRectZero];
-        lab.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:12];
+        lab.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?18:12];
         lab.textColor = [UIColor colorWithHexString:@"#808080"];
         lab.numberOfLines = 0;
         lab.text = @"1.请保证填写的信息真实有效；\n2.证件图片上的信息清晰可见、无遮挡、无修改";
-        CGFloat labHeight = [lab.text boundingRectWithSize:CGSizeMake(kScreenWidth-50, CGFLOAT_MAX) withTextFont:lab.font].height;
-        lab.frame = CGRectMake(25,lab1.bottom,kScreenWidth-50,labHeight);
+        CGFloat labHeight = [lab.text boundingRectWithSize:IS_IPAD?CGSizeMake(kScreenWidth-100, CGFLOAT_MAX):CGSizeMake(kScreenWidth-50, CGFLOAT_MAX) withTextFont:lab.font].height;
+        lab.frame = IS_IPAD?CGRectMake(50, lab1.bottom+7, kScreenWidth-80, labHeight):CGRectMake(25,lab1.bottom,kScreenWidth-50,labHeight);
         [cell.contentView addSubview:lab];
         
     }
@@ -130,7 +131,11 @@
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    return indexPath.row==2?(kPhotoHeight+40)*2+150:50;
+    if (indexPath.row<2) {
+        return IS_IPAD?76:50;
+    }else{
+        return IS_IPAD?(276+62)*2+200:(kPhotoHeight+40)*2+150;
+    }
 }
 
 
@@ -173,8 +178,7 @@
 #pragma mark UIImagePickerControllerDelegate
 -(void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info{
     [self.imgPicker dismissViewControllerAnimated:YES completion:nil];
-    UIImage* curImage=[info objectForKey:UIImagePickerControllerEditedImage];
-    curImage=[curImage cropImageWithSize:CGSizeMake(kPhotoWidth, kPhotoHeight)];
+    UIImage* curImage=[info objectForKey:UIImagePickerControllerOriginalImage];
     if(selectedIndex==0){
         frontImage = curImage;
     }else{
@@ -243,13 +247,13 @@
 -(void)addVerifiedPhotoAction:(UIButton *)sender{
     [self.view endEditing:YES];
     selectedIndex = sender.tag;
-    [self addPhoto];
+    [self addPhotoForView:sender];
 }
 
 #pragma mark -- getters
 -(UITableView *)verifiedTableView{
     if (!_verifiedTableView) {
-        _verifiedTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, kNavHeight+5, kScreenWidth, kScreenHeight-kNavHeight-15) style:UITableViewStylePlain];
+        _verifiedTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, kNavHeight+5, kScreenWidth, kScreenHeight-kNavHeight-5) style:UITableViewStylePlain];
         _verifiedTableView.dataSource = self;
         _verifiedTableView.delegate = self;
         _verifiedTableView.separatorStyle = UITableViewCellSelectionStyleNone;

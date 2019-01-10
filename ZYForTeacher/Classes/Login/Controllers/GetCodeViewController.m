@@ -31,6 +31,18 @@
     [self initGetCodeView];
 }
 
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    
+    [MobClick beginLogPageView:@"忘记密码"];
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    
+    [MobClick endLogPageView:@"忘记密码"];
+}
+
 #pragma mark -- Event response
 #pragma mark 下一步
 -(void)getCodeForNextStepAction{
@@ -49,7 +61,7 @@
     }
     NSString *phoneStr = self.phoneTextView.myText.text;
     NSString *codeStr = self.securityCodeTextView.myText.text;
-    
+   
     kSelfWeak;
     NSString *body = [NSString stringWithFormat:@"mobile=%@&code=%@",phoneStr,codeStr];
     [TCHttpRequest postMethodWithURL:kCheckCodeAPI body:body success:^(id json) {
@@ -110,17 +122,9 @@
     }];
 }
 
-#pragma mark 监听输入变化
--(void)textFieldDidChange:(UITextField *)textField{
-    if(textField == self.phoneTextView.myText || textField == self.securityCodeTextView.myText){
-        
-    }
-}
-
 #pragma mark 是否已阅读
 -(void)chooseForDidReadUserAgreement:(UIButton *)sender{
     sender.selected = !sender.selected;
-    
 }
 
 #pragma mark -- delegate
@@ -169,8 +173,8 @@
 #pragma mark 标题
 -(UILabel *)titleLabel{
     if (!_titleLabel) {
-        _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(44, kNavHeight+15, 120, 28)];
-        _titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:20];
+        _titleLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(78, kNavHeight+24, 200, 42):CGRectMake(44, kNavHeight+15, 120, 28)];
+        _titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:IS_IPAD?30:20];
         _titleLabel.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
         _titleLabel.text = @"忘记密码";
     }
@@ -180,9 +184,8 @@
 #pragma mark 手机号
 -(LoginTextView *)phoneTextView{
     if (!_phoneTextView) {
-        _phoneTextView = [[LoginTextView alloc] initWithFrame:CGRectMake(26.0,self.titleLabel.bottom+30.0, kScreenWidth-51.0, 52) placeholder:@"请输入手机号码" icon:@"register_phone" isNumber:YES];
+        _phoneTextView = [[LoginTextView alloc] initWithFrame:IS_IPAD?CGRectMake(50, self.titleLabel.bottom+25, kScreenWidth-100, 85):CGRectMake(26.0,self.titleLabel.bottom+30.0, kScreenWidth-51.0, 52) placeholder:@"请输入手机号码" icon:@"register_phone" isNumber:YES];
         _phoneTextView.myText.delegate = self;
-        [_phoneTextView.myText addTarget:self action:@selector(textFieldDidChange:) forControlEvents:UIControlEventEditingChanged];
     }
     return _phoneTextView;
 }
@@ -190,9 +193,8 @@
 #pragma mark 验证码
 -(LoginTextView *)securityCodeTextView{
     if (!_securityCodeTextView) {
-        _securityCodeTextView = [[LoginTextView alloc] initWithFrame:CGRectMake(26.0, self.phoneTextView.bottom+10,kScreenWidth-175, 52.0) placeholder:@"请输入验证码" icon:@"register_message" isNumber:NO];
+        _securityCodeTextView = [[LoginTextView alloc] initWithFrame:IS_IPAD?CGRectMake(50, self.phoneTextView.bottom, kScreenWidth-100, 85):CGRectMake(26.0, self.phoneTextView.bottom+10,kScreenWidth-155, 52.0) placeholder:@"请输入验证码" icon:@"register_message" isNumber:NO];
         _securityCodeTextView.myText.delegate = self;
-        [_securityCodeTextView.myText addTarget:self action:@selector(textFieldDidChange:) forControlEvents:UIControlEventEditingChanged];
     }
     return _securityCodeTextView;
 }
@@ -200,12 +202,13 @@
 #pragma mark 获取验证码
 -(UIButton *)getCodeButton{
     if (!_getCodeButton) {
-        _getCodeButton = [[UIButton alloc] initWithFrame:CGRectMake(kScreenWidth-143.0, self.phoneTextView.bottom+20,112.0, 33)];
+        _getCodeButton = [[UIButton alloc] initWithFrame:IS_IPAD?CGRectMake(kScreenWidth-190,self.phoneTextView.bottom+17, 140, 50):CGRectMake(kScreenWidth-120.0, self.phoneTextView.bottom+20,100.0, 33)];
         [_getCodeButton setTitle:@"获取验证码" forState:UIControlStateNormal];
         _getCodeButton.layer.cornerRadius = 4;
         _getCodeButton.layer.borderColor = [UIColor colorWithHexString:@"#FF7568"].CGColor;
         _getCodeButton.layer.borderWidth = 1.0;
-        _getCodeButton.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+        CGFloat fontSize = kScreenWidth<375.0?14:16;
+        _getCodeButton.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?25:fontSize];
         [_getCodeButton setTitleColor:[UIColor colorWithHexString:@"#FF7568"] forState:UIControlStateNormal];
         [_getCodeButton addTarget:self action:@selector(getSecurityCodeAction:) forControlEvents:UIControlEventTouchUpInside];
         
@@ -216,7 +219,8 @@
 #pragma mark 注册
 -(LoginButton *)nextStepButton{
     if (!_nextStepButton) {
-        _nextStepButton = [[LoginButton alloc] initWithFrame:CGRectMake(48.0, self.securityCodeTextView.bottom+37.0,kScreenWidth-95.0, (kScreenWidth-95.0)*(128.0/588.0)) title:@"下一步"];
+        CGRect btnFrame = IS_IPAD?CGRectMake((kScreenWidth-515)/2.0, self.securityCodeTextView.bottom+60.0,515, 75):CGRectMake(48,  self.securityCodeTextView.bottom+37.0,kScreenWidth-96, 60);
+        _nextStepButton = [[LoginButton alloc] initWithFrame:btnFrame title:@"下一步"];
         [_nextStepButton addTarget:self action:@selector(getCodeForNextStepAction) forControlEvents:UIControlEventTouchUpInside];
     }
     return _nextStepButton;

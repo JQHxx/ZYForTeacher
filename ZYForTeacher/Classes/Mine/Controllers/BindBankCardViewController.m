@@ -28,13 +28,14 @@
 #import "BankCardListViewController.h"
 #import "WithdrawViewController.h"
 #import "BankModel.h"
+#import "LoginButton.h"
 
 @interface BindBankCardViewController ()<UITableViewDelegate,UITableViewDataSource>{
     NSArray    *titles;
 }
 
 @property (nonatomic , strong) UITableView *bankTableView;
-@property (nonatomic , strong) UIButton    *confirmBtn;
+@property (nonatomic , strong) LoginButton    *confirmBtn;
 
 @end
 
@@ -59,11 +60,11 @@
     UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
     cell.textLabel.text = titles[indexPath.row];
-    cell.textLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+    cell.textLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?25:16];
     cell.textLabel.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
     
-    UILabel *valuelabel = [[UILabel alloc] initWithFrame:CGRectMake(106, 15, kScreenWidth-120, 22)];
-    valuelabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+    UILabel *valuelabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(166, 21, kScreenWidth-180, 36):CGRectMake(106, 15, kScreenWidth-120, 22)];
+    valuelabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?25:16];
     valuelabel.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
     [cell.contentView addSubview:valuelabel];
     
@@ -81,7 +82,15 @@
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    return  50;
+    return  IS_IPAD?80:50;
+}
+
+- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath{
+    if (IS_IPAD) {
+        [cell setSeparatorInset:UIEdgeInsetsMake(0, 39, 0, 38)];
+    }else{
+        [cell setSeparatorInset:UIEdgeInsetsMake(0,21, 0, 0)];
+    }
 }
 
 #pragma mark -- Event Response
@@ -132,12 +141,10 @@
 }
 
 #pragma mark 确定绑定
--(UIButton *)confirmBtn{
+-(LoginButton *)confirmBtn{
     if (!_confirmBtn) {
-        _confirmBtn = [[UIButton alloc] initWithFrame:CGRectMake(48,kNavHeight+244 , kScreenWidth-95,(kScreenWidth-95)*(128.0/588.0))];
-        [_confirmBtn setTitle:@"确定绑定" forState:UIControlStateNormal];
-        [_confirmBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        [_confirmBtn setBackgroundImage:[UIImage imageNamed:@"login_bg_btn"] forState:UIControlStateNormal];
+        CGRect btnFrame = IS_IPAD?CGRectMake((kScreenWidth-515)/2.0,kNavHeight+390 ,515, 75):CGRectMake(48,kNavHeight+244 ,kScreenWidth-96, 60);
+        _confirmBtn = [[LoginButton alloc] initWithFrame:btnFrame title:@"确定绑定"];
         [_confirmBtn addTarget:self action:@selector(confirmBindBankCardAction) forControlEvents:UIControlEventTouchUpInside];
     }
     return _confirmBtn;

@@ -12,7 +12,6 @@
 
 singleton_interface(ZYHelper)
 
-@property (nonatomic ,assign) BOOL   isUpdateHome;
 @property (nonatomic ,assign) BOOL   isUpdateMessageUnread;
 @property (nonatomic ,assign) BOOL   isUpdateMessageInfo;
 @property (nonatomic ,assign) BOOL   isUpdateUserInfo;

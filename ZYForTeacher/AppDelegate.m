@@ -32,9 +32,11 @@
 #ifdef NSFoundationVersionNumber_iOS_9_x_Max
 #import <UserNotifications/UserNotifications.h>
 #endif
+#import "GuidanceViewController.h"
+#import "NTESAVNotifier.h"
+#import "UserModel.h"
 
-@interface AppDelegate ()<NIMNetCallManagerDelegate,UNUserNotificationCenterDelegate>
-
+@interface AppDelegate ()<NIMNetCallManagerDelegate,UNUserNotificationCenterDelegate,NIMLoginManagerDelegate>
 
 
 @end
@@ -43,27 +45,42 @@
 
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    self.window=[[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-    self.window.backgroundColor=[UIColor whiteColor];
-    
-    [[AVAudioSession sharedInstance]setCategory:AVAudioSessionCategoryPlayback error:nil];
     
     [self setAppSystemConfigWithOptions:launchOptions];
     //申请通知权限
     [self replyPushNotificationAuthorization:application];
-    
     [self loadInitializeData];
     
-    BOOL isLogin=[[NSUserDefaultsInfos getValueforKey:kIsLogin] boolValue];
-    if (isLogin) {
+    [NSUserDefaultsInfos removeObjectForKey:kCallingForID];
+    
+    self.window=[[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    self.window.backgroundColor=[UIColor whiteColor];
+    BOOL hasShowGuidance=[[NSUserDefaultsInfos getValueforKey:kShowGuidance] boolValue];
+    if (!hasShowGuidance) {
+        GuidanceViewController *guidanceVC=[[GuidanceViewController alloc] init];
+        self.window.rootViewController=guidanceVC;
+    }else{
+        BOOL isLogin=[[NSUserDefaultsInfos getValueforKey:kIsLogin] boolValue];
         NSString *account = [NSUserDefaultsInfos getValueforKey:kUserThirdID];
         NSString *token = [NSUserDefaultsInfos getValueforKey:kUserThirdToken];
-        [[[NIMSDK sharedSDK] loginManager] autoLogin:account token:token];
-        [self setMyRootViewController];
-    } else {
-        LoginViewController *loginVC = [[LoginViewController alloc] init];
-        BaseNavigationController *nav = [[BaseNavigationController alloc] initWithRootViewController:loginVC];
-        self.window.rootViewController = nav;
+        if (isLogin&&!kIsEmptyString(account)&&!kIsEmptyString(token)) {
+            NIMAutoLoginData *loginData = [[NIMAutoLoginData alloc] init];
+            loginData.account = account;
+            loginData.token = token;
+            [[[NIMSDK sharedSDK] loginManager] autoLogin:loginData];
+            
+            [self setMyRootViewController];
+        } else {
+            LoginViewController *loginVC = [[LoginViewController alloc] init];
+            BaseNavigationController *nav = [[BaseNavigationController alloc] initWithRootViewController:loginVC];
+            self.window.rootViewController = nav;
+        }
+    }
+    
+    //检查是否从通知启动
+    if(launchOptions){
+        NSDictionary* remoteNotification=[launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
+        [self handleRecerceNotificationData:remoteNotification];
     }
     
     [self.window makeKeyAndVisible];
@@ -103,28 +120,18 @@
 
 
 - (void)applicationWillTerminate:(UIApplication *)application {
+    [NSUserDefaultsInfos removeObjectForKey:kCallingForID];
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
 }
 
 #pragma mark 接收通知
 #pragma mark iOS10使用这个方法接收通知
 -(void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler{
-    MyLog(@"UIApplicationDelegate --- iOS10 在前台收到通知 didReceiveRemoteNotification,userinfo:%@",userInfo);
+    MyLog(@"didReceiveRemoteNotification ---------------------- 在后台收到通知,userinfo:%@",userInfo);
     [UMessage setAutoAlert:NO];
     [UMessage didReceiveRemoteNotification:userInfo];
     
-    if (kIsDictionary(userInfo)&&userInfo.count>0) {
-        NSString *type = [userInfo valueForKey:@"cate"];
-        if (!kIsEmptyString(type)) {
-            if ([type isEqualToString:@"authId"]||[type isEqualToString:@"authEdu"]||[type isEqualToString:@"authTeach"]||[type isEqualToString:@"authSkill"]) { //认证推送
-                [[NSNotificationCenter defaultCenter] postNotificationName:kAuthUpdateNotification object:nil userInfo:userInfo];
-            }else if ([type isEqualToString:@"guideCancel"]){
-                [[NSNotificationCenter defaultCenter] postNotificationName:kGuideCancelNotification object:nil userInfo:userInfo];
-            }else if ([type isEqualToString:@"cancel"]){
-                 [[NSNotificationCenter defaultCenter] postNotificationName:kOrderCancelNotification object:nil userInfo:userInfo];
-            }
-        }
-    }
+    [self handleRecerceNotificationData:userInfo];
     
     completionHandler(UIBackgroundFetchResultNewData);
 }
@@ -146,24 +153,14 @@
     //收到用户的基本信息
     NSDictionary * userInfo = content.userInfo;
     if([notification.request.trigger isKindOfClass:[UNPushNotificationTrigger class]]) {
-         MyLog(@"iOS10 收到远程通知:%@",userInfo);
+         MyLog(@"iOS10 前台收到远程通知:%@",userInfo);
         //应用处于前台时的远程推送接受
         //关闭U-Push自带的弹出框
         [UMessage setAutoAlert:NO];
         //必须加这句代码
         [UMessage didReceiveRemoteNotification:userInfo];
-        if (kIsDictionary(userInfo)&&userInfo.count>0) {
-            NSString *type = [userInfo valueForKey:@"cate"];
-            if (!kIsEmptyString(type)) {
-                if ([type isEqualToString:@"authId"]||[type isEqualToString:@"authEdu"]||[type isEqualToString:@"authTeach"]||[type isEqualToString:@"authSkill"]) { //认证推送
-                    [[NSNotificationCenter defaultCenter] postNotificationName:kAuthUpdateNotification object:nil userInfo:userInfo];
-                }else if ([type isEqualToString:@"guideCancel"]){
-                    [[NSNotificationCenter defaultCenter] postNotificationName:kGuideCancelNotification object:nil userInfo:userInfo];
-                }else if ([type isEqualToString:@"cancel"]){
-                    [[NSNotificationCenter defaultCenter] postNotificationName:kOrderCancelNotification object:nil userInfo:userInfo];
-                }
-            }
-        }
+        
+        [self handleRecerceNotificationData:userInfo];
         
     }else{
         // 判断为本地通知
@@ -189,7 +186,9 @@
         NSString *type = [userInfo valueForKey:@"cate"];
         if (!kIsEmptyString(type)) {
             NSNumber *mid = [userInfo valueForKey:@"mid"];
-            [self setMessageReadWithMid:mid type:type];
+            if (kIsEmptyObject(mid)||[mid integerValue]>0) {
+                [self setMessageReadWithMid:mid type:type];
+            }
             
             BaseNavigationController *nav = (BaseNavigationController *)self.drawerController.centerViewController;
             if ([type isEqualToString:@"sys"]) {
@@ -202,6 +201,10 @@
                 orderDetailsVC.orderId = userInfo[@"oid"];
                 orderDetailsVC.isNotifyIn = YES;
                 [nav pushViewController:orderDetailsVC animated:YES];
+            }else if ([type isEqualToString:@"receiveCheck"]){
+                [[NSNotificationCenter defaultCenter] postNotificationName:kCheckRecieveNotification object:nil userInfo:userInfo];
+            }else if ([type isEqualToString:@"receiveGuide"]){
+                [[NSNotificationCenter defaultCenter] postNotificationName:kGuideRecieveNotification object:nil userInfo:userInfo];
             }
         }
     }else{
@@ -223,19 +226,37 @@
 #pragma mark -- NIMNetCallManagerDelegate
 #pragma mark 被叫收到呼叫
 -(void)onReceive:(UInt64)callID from:(NSString *)caller type:(NIMNetCallMediaType)type message:(NSString *)extendMessage{
-    NSDictionary *dic =(NSDictionary*)extendMessage;
-    HomeworkModel *model = [HomeworkModel yy_modelWithJSON:dic];
-    
-    MyLog(@"被叫收到呼叫---caller:%@,type:%zd,extendMessage--%@,",caller,type,dic);
-    BaseNavigationController *nav = (BaseNavigationController *)self.drawerController.centerViewController;
-    MyConnecttingViewController *connecttingVC = [[MyConnecttingViewController alloc] initWithCaller:caller callId:callID];
-    connecttingVC.homework = model;
-    [nav pushViewController:connecttingVC animated:NO];
-    //当我们push成功之后，关闭我们的抽屉
-    [self.drawerController closeDrawerAnimated:YES completion:^(BOOL finished) {
-         //设置打开抽屉模式为MMOpenDrawerGestureModeNone，也就是没有任何效果。
-        [self.drawerController setOpenDrawerGestureModeMask:MMOpenDrawerGestureModeNone];
-    }];
+    NSNumber *callingID =  [NSUserDefaultsInfos getValueforKey:kCallingForID];
+    if (!kIsEmptyObject(callingID)||[callingID unsignedLongLongValue]>0) {
+        [[NIMAVChatSDK sharedSDK].netCallManager control:callID type:NIMNetCallControlTypeBusyLine];
+    }else{
+        NSDictionary *dic =(NSDictionary*)extendMessage;
+        HomeworkModel *model = [HomeworkModel yy_modelWithJSON:dic];
+        
+        //震动
+        [[NTESAVNotifier sharedNTESAVNotifier] startVibrate];
+        
+        MyLog(@"被叫收到呼叫---caller:%@,type:%zd,extendMessage--%@,",caller,type,dic);
+        BaseNavigationController *nav = (BaseNavigationController *)self.drawerController.centerViewController;
+        MyConnecttingViewController *connecttingVC = [[MyConnecttingViewController alloc] initWithCaller:caller callId:callID];
+        connecttingVC.homework = model;
+        [nav pushViewController:connecttingVC animated:NO];
+        //当我们push成功之后，关闭我们的抽屉
+        [self.drawerController closeDrawerAnimated:YES completion:^(BOOL finished) {
+            //设置打开抽屉模式为MMOpenDrawerGestureModeNone，也就是没有任何效果。
+            [self.drawerController setOpenDrawerGestureModeMask:MMOpenDrawerGestureModeNone];
+        }];
+    }
+}
+
+#pragma mark -- NIMLoginManagerDelegate
+#pragma mark 登录网易云回调
+-(void)onLogin:(NIMLoginStep)step{
+    MyLog(@"登录成功");
+}
+
+-(void)onAutoLoginFailed:(NSError *)error{
+    MyLog(@"自动登录失败 onAutoLoginFailed %zd,error:%@",error.code,error.localizedDescription);
 }
 
 #pragma mark 加载初始数据
@@ -297,7 +318,7 @@
     
     self.drawerController = [[MMDrawerController alloc] initWithCenterViewController:centerNav leftDrawerViewController:leftNav];
     [self.drawerController setShowsShadow:NO];
-    self.drawerController.maximumLeftDrawerWidth = kScreenWidth-100;
+    self.drawerController.maximumLeftDrawerWidth = IS_IPAD?445:240;
     [self.drawerController setOpenDrawerGestureModeMask:MMOpenDrawerGestureModeAll];
     [self.drawerController setCloseDrawerGestureModeMask:MMCloseDrawerGestureModeAll];
     self.window.rootViewController = self.drawerController;
@@ -315,7 +336,11 @@
     
     //网易云
     NSString *appKey        = kNIMSDKAppKey;
-    [[NIMSDK sharedSDK] registerWithAppID:appKey cerName:kNIMApnsCername];
+    NIMSDKOption *option    = [NIMSDKOption optionWithAppKey:appKey];
+    option.apnsCername      = kNIMApnsCername;
+    option.pkCername        = kNIMApnsCername;
+    [[NIMSDK sharedSDK] registerWithOption:option];
+    [[[NIMSDK sharedSDK] loginManager] addDelegate:self];
     MyLog(@"App Started SDK Version %@\n SDK Info: %@",[[NIMSDK sharedSDK] sdkVersion],[NIMSDKConfig sharedConfig]);
     [[NIMAVChatSDK sharedSDK].netCallManager addDelegate:self];
     
@@ -325,6 +350,10 @@
     [UMConfigure setEncryptEnabled:YES];//打开加密传输
     [UMConfigure setLogEnabled:YES];//设置打开日志
     [UMConfigure initWithAppkey:kUMAppKey channel:@"App Store"]; //初始化
+    
+    NSString* deviceID =  [UMConfigure deviceIDForIntegration];
+    MyLog(@"集成测试的deviceID:%@",deviceID);
+    
     //分享
     //设置微信的appKey和appSecret
     [[UMSocialManager defaultManager] setPlaform:UMSocialPlatformType_WechatSession appKey:kWechatAppKey appSecret:kWechatAppSecret redirectURL:nil];
@@ -381,6 +410,49 @@
     
     //注册远端消息通知获取device token
     [application registerForRemoteNotifications];
+}
+
+#pragma mark 收到推送处理
+-(void)handleRecerceNotificationData:(NSDictionary *)userInfo{
+    if (kIsDictionary(userInfo)&&userInfo.count>0) {
+        NSString *type = [userInfo valueForKey:@"cate"];
+        if (!kIsEmptyString(type)) {
+            if ([type isEqualToString:@"authId"]||[type isEqualToString:@"authEdu"]||[type isEqualToString:@"authTeach"]||[type isEqualToString:@"authSkill"]) { //认证推送
+                
+                NSString *token = kUserTokenValue;
+                if (!kIsEmptyString(token)) {
+                    NSString *body = [NSString stringWithFormat:@"token=%@",token];
+                    [TCHttpRequest postMethodWithoutLoadingForURL:kGetUserInfoAPI body:body success:^(id json) {
+                        NSDictionary *data = [json objectForKey:@"data"];
+                        UserModel *user = [[UserModel alloc] init];
+                        [user setValues:data];
+                        
+                        [NSUserDefaultsInfos putKey:kAuthIdentidy andValue:user.auth_id];   //实名认证
+                        [NSUserDefaultsInfos putKey:kAuthEducation andValue:user.auth_edu];  //学历认证
+                        [NSUserDefaultsInfos putKey:kAuthTeach andValue:user.auth_teach];   //教师资质
+                        [NSUserDefaultsInfos putKey:kAuthSkill andValue:user.auth_skill];    //技能认证
+                        
+                        [[NSNotificationCenter defaultCenter] postNotificationName:kAuthUpdateNotification object:nil userInfo:userInfo];
+                        
+                    }];
+                }
+            }else if ([type isEqualToString:@"guideCancel"]){
+                [[NSNotificationCenter defaultCenter] postNotificationName:kGuideCancelNotification object:nil userInfo:userInfo];
+            }else if ([type isEqualToString:@"cancel"]){
+                [[NSNotificationCenter defaultCenter] postNotificationName:kOrderCancelNotification object:nil userInfo:userInfo];
+            }else if ([type isEqualToString:@"receiveCheck"]){
+                [[NSNotificationCenter defaultCenter] postNotificationName:kCheckRecieveNotification object:nil userInfo:userInfo];
+            }else if ([type isEqualToString:@"receiveGuide"]){
+                [[NSNotificationCenter defaultCenter] postNotificationName:kGuideRecieveNotification object:nil userInfo:userInfo];
+            }
+        }
+    }
+}
+
+-(void)dealloc{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [[[NIMSDK sharedSDK] loginManager] removeDelegate:self];
+    [[NIMAVChatSDK sharedSDK].netCallManager removeDelegate:self];
 }
 
 @end

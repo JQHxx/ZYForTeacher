@@ -17,14 +17,12 @@
 #import "WhiteboardPoint.h"
 #import "WhiteboardDrawView.h"
 #import "WhiteboardCmdHandler.h"
-#import "YBPopupMenu.h"
-#import "NIMSessionViewController.h"
 #import "SketchpadView.h"
 #import "WhiteboardManagerView.h"
 #import "MyOrderViewController.h"
 #import "SDPhotoBrowser.h"
 
-@interface JobTutorialViewController ()<UIScrollViewDelegate,TutorialToolBarViewDelegate,NIMNetCallManagerDelegate,WhiteboardManagerDelegate,NIMLoginManagerDelegate,YBPopupMenuDelegate,WhiteboardCmdHandlerDelegate,WhiteboardManagerViewDelegate,NIMConversationManagerDelegate,SDPhotoBrowserDelegate>{
+@interface JobTutorialViewController ()<UIScrollViewDelegate,TutorialToolBarViewDelegate,NIMNetCallManagerDelegate,WhiteboardManagerDelegate,NIMLoginManagerDelegate,WhiteboardCmdHandlerDelegate,WhiteboardManagerViewDelegate,SDPhotoBrowserDelegate>{
     NSInteger     allNum;
     UILabel       *timeLabel;
     NSInteger     timeCount;    //时间
@@ -36,10 +34,8 @@
     BOOL          isShowWhiteboard; //显示白板
     BOOL         isCoaching;  //正在辅导
     BOOL         isEndCoach;  //结束辅导
-    UILabel      *menuBadgeLbl;
 }
 
-@property (nonatomic , strong) UILabel        *badgeLabel;          //红点
 @property (nonatomic , strong ) UIButton      *moreBtn;      //更多
 @property (nonatomic , strong ) UIScrollView  *homeworkScrollView;
 @property (nonatomic , strong ) UILabel       *countLab;
@@ -102,7 +98,6 @@
     _myUid = [[NIMSDK sharedSDK].loginManager currentAccount];
     MyLog(@"通信ID：%@，callID:%lld",_myUid,self.callInfo.callID);
     [[NIMSDK sharedSDK].loginManager addDelegate:self];
-    [[NIMSDK sharedSDK].conversationManager addDelegate:self];
     
     self.isHiddenNavBar = YES;
     
@@ -117,6 +112,9 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
+    
+    [MobClick beginLogPageView:@"作业辅导"];
+    
     [[UIApplication sharedApplication] setIdleTimerDisabled:YES];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(cancelCurrentCoach) name:kOrderCancelNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(appEnterForeground:) name:UIApplicationWillEnterForegroundNotification object:nil];
@@ -128,6 +126,9 @@
 
 -(void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
+    
+    [MobClick endLogPageView:@"作业辅导"];
+    
     [[UIApplication sharedApplication] setIdleTimerDisabled:NO];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationWillEnterForegroundNotification object:nil];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationDidEnterBackgroundNotification object:nil];
@@ -159,12 +160,12 @@
             isShowBrush = !isShowBrush;
             if (isShowBrush) {
                 [UIView animateWithDuration:0.2 animations:^{
-                    [self.brushView setFrame:CGRectMake(0, kScreenHeight-60-60, kScreenWidth, 60)];
+                    [self.brushView setFrame:IS_IPAD?CGRectMake(0, kScreenHeight-95-95, kScreenWidth, 95): CGRectMake(0, kScreenHeight-60-60, kScreenWidth, 60)];
                     [self.view addSubview:self.brushView];
                 }];
             }else{
                 [UIView animateWithDuration:0.2 animations:^{
-                    [self.brushView setFrame:CGRectMake(0, kScreenHeight-60, kScreenWidth, 0)];
+                    [self.brushView setFrame:IS_IPAD?CGRectMake(0, kScreenHeight-95, kScreenWidth, 0):CGRectMake(0, kScreenHeight-60, kScreenWidth, 0)];
                     [self.brushView removeFromSuperview];
                 } completion:^(BOOL finished) {
                     self.brushView = nil;
@@ -188,11 +189,11 @@
                 self.managerView.whiteboardsArray = drawViewResultsArray;
                 [self.managerView.myCollectionView reloadData];
                 [UIView animateWithDuration:0.2 animations:^{
-                    [self.managerView setFrame:CGRectMake(0, kScreenHeight-60-127, kScreenWidth, 127)];
+                    [self.managerView setFrame:IS_IPAD?CGRectMake(0, kScreenHeight-95-195, kScreenWidth, 195):CGRectMake(0, kScreenHeight-60-127, kScreenWidth, 127)];
                 }];
             }else{
                 [UIView animateWithDuration:0.2 animations:^{
-                    [self.managerView setFrame:CGRectMake(0, kScreenHeight-60, kScreenWidth, 0)];
+                    [self.managerView setFrame:IS_IPAD?CGRectMake(0, kScreenHeight-95, kScreenWidth, 0):CGRectMake(0, kScreenHeight-60, kScreenWidth, 0)];
                     [self.managerView removeFromSuperview];
                 } completion:^(BOOL finished) {
                     self.managerView = nil;
@@ -225,76 +226,44 @@
     }
 }
 
-#pragma mark YBPopupMenuDelegate
--(void)ybPopupMenuDidSelectedAtIndex:(NSInteger)index ybPopupMenu:(YBPopupMenu *)ybPopupMenu{
-    if(index==0){
-        CancelViewController *cancelVC = [[CancelViewController alloc] init];
-        cancelVC.jobid = self.homework.job_id;
-        cancelVC.myTitle = @"取消辅导";
-        cancelVC.type = CancelTypeOrderCoach;
-        [self.navigationController pushViewController:cancelVC animated:YES];
-    }else{
-        NIMSession *session = [NIMSession session:self.homework.third_id type:NIMSessionTypeP2P];
-        NIMSessionViewController *sessionVC = [[NIMSessionViewController alloc] initWithSession:session];
-        [self.navigationController pushViewController:sessionVC animated:YES];
-    }
-}
-
 #pragma mark NIMNetCallManagerDelegate
 #pragma mark 点对点通话建立成功
 -(void)onCallEstablished:(UInt64)callID{
     MyLog(@"点对点通话建立成功--onCallEstablished:%lld",callID);
+    [NSUserDefaultsInfos putKey:kCallingForID andValue:[NSNumber numberWithUnsignedLongLong:callID]];
 }
 
 #pragma mark 通话异常断开
 -(void)onCallDisconnected:(UInt64)callID withError:(NSError *)error{
-    MyLog(@"通话异常断开--error:%@",error.localizedDescription);
-    [[NIMAVChatSDK sharedSDK].netCallManager hangup:self.callInfo.callID];
-    [self.view makeToast:@"通话异常断开，请重新连接" duration:1.0 position:CSToastPositionCenter];
-    kSelfWeak;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [weakSelf backAction];
-    });
+    MyLog(@"通话异常断开--callID:%lld, error:%@",callID,error.localizedDescription);
+    if (callID==self.callInfo.callID) {
+        [NSUserDefaultsInfos removeObjectForKey:kCallingForID];
+        [[NIMAVChatSDK sharedSDK].netCallManager hangup:self.callInfo.callID];
+        [self.view makeToast:@"通话异常断开，请重新连接" duration:1.0 position:CSToastPositionCenter];
+        kSelfWeak;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [weakSelf backAction];
+        });
+    }
 }
 
 #pragma mark 收到对方网络通话控制信息，用于方便通话双方沟通信息
 -(void)onControl:(UInt64)callID from:(NSString *)user type:(NIMNetCallControlType)control{
     MyLog(@"收到对方网络通话控制信息,callID:%lld,user:%@,type:%zd",callID,user,control);
-    if (control== NIMNetCallControlTypeBackground) {
-        [self.timer setFireDate:[NSDate distantFuture]]; //关闭计时器
-        [self.view makeToast:@"对方退到后台" duration:1.0 position:CSToastPositionCenter];
-    }else if (control == NIMNetCallControlTypeFeedabck){
-        [self.timer setFireDate:[NSDate distantPast]]; //开启计时器
-        [self.view makeToast:@"对方回到前台" duration:1.0 position:CSToastPositionCenter];
+    if (callID==self.callInfo.callID) {
+        if (control== NIMNetCallControlTypeBackground) {
+            [self.timer setFireDate:[NSDate distantFuture]]; //关闭计时器
+            [self.view makeToast:@"对方退到后台" duration:1.0 position:CSToastPositionCenter];
+        }else if (control == NIMNetCallControlTypeFeedabck){
+            [self.timer setFireDate:[NSDate distantPast]]; //开启计时器
+            [self.view makeToast:@"对方回到前台" duration:1.0 position:CSToastPositionCenter];
+        }
     }
 }
 
 #pragma mark 对方挂断电话
 -(void)onHangup:(UInt64)callID by:(NSString *)user{
-    MyLog(@"对方挂断电话--onHangup");
-    if (!isEndCoach) {
-        [self.view makeToast:@"对方挂断电话" duration:1.0 position:CSToastPositionCenter];
-        [self backAction];
-    }
-    
-}
-
-#pragma mark NIMConversationManagerDelegate
-#pragma mark 增加最近会话的回调
--(void)didAddRecentSession:(NIMRecentSession *)recentSession totalUnreadCount:(NSInteger)totalUnreadCount{
-    MyLog(@"TutorialViewController didAddRecentSession-- totalUnreadCount:%ld",totalUnreadCount);
-    self.badgeLabel.hidden = totalUnreadCount<1;
-}
-
-#pragma mark 最近会话修改的回调
--(void)didUpdateRecentSession:(NIMRecentSession *)recentSession totalUnreadCount:(NSInteger)totalUnreadCount{
-    MyLog(@"TutorialViewController 更新会话 didUpdateRecentSession -- totalUnreadCount:%ld",totalUnreadCount);
-    self.badgeLabel.hidden = totalUnreadCount<1;
-}
-
-#pragma mark 已读回调
--(void)allMessagesRead{
-    self.badgeLabel.hidden = YES;
+    MyLog(@"对方挂断电话--onHangup ,callID:%lld",callID);
 }
 
 #pragma mark - WhiteboardManagerDelegate
@@ -470,24 +439,11 @@
 #pragma mark -- Event Reponse
 #pragma mark 查看更多（取消辅导和消息）
 -(void)getMoreHandleListAction{
-    NSArray *titles = @[@"取消辅导",@"消息"];
-    kSelfWeak;
-    [YBPopupMenu showRelyOnView:self.moreBtn titles:titles icons:@[@"",@"",@""] menuWidth:100 otherSettings:^(YBPopupMenu *popupMenu) {
-        popupMenu.priorityDirection = YBPopupMenuPriorityDirectionTop;
-        popupMenu.borderWidth = 0.5;
-        popupMenu.borderColor = [UIColor colorWithHexString:@"0xeeeeeee"];
-        popupMenu.delegate = self;
-        popupMenu.textColor = [UIColor colorWithHexString:@"0x626262"];
-        popupMenu.fontSize = 14;
-        
-        if (menuBadgeLbl==nil) {
-            menuBadgeLbl=[[UILabel alloc] initWithFrame:CGRectMake(50,65, 8, 8)];
-            menuBadgeLbl.backgroundColor=[UIColor redColor];
-            menuBadgeLbl.boderRadius = 4;
-            [popupMenu addSubview:menuBadgeLbl];
-        }
-        menuBadgeLbl.hidden=weakSelf.badgeLabel.hidden;
-    }];
+    CancelViewController *cancelVC = [[CancelViewController alloc] init];
+    cancelVC.jobid = self.homework.job_id;
+    cancelVC.myTitle = @"取消辅导";
+    cancelVC.type = CancelTypeOrderCoach;
+    [self.navigationController pushViewController:cancelVC animated:YES];
 }
 
 #pragma mark 开始审题
@@ -518,22 +474,34 @@
 
 #pragma mark 结束辅导
 -(void)endHomeworkTutoringAction{
-    if (self.timer) {
-        [self.timer invalidate];
-        self.timer = nil;
-    }
-    isEndCoach = YES;
-    [self sendCmdDataWithType:WhiteBoardCmdTypeEndCoach]; //发送结束辅导指令
-    [ZYHelper sharedZYHelper].isUpdateOrderList = YES;
-    [self.view makeToast:@"已结束当前作业辅导" duration:1.0 position:CSToastPositionCenter];
     kSelfWeak;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [weakSelf backAction];
-    });
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"结束辅导" message:@"确定要结束作业辅导吗？" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        
+    }];
+    UIAlertAction *confirmAction = [UIAlertAction actionWithTitle:@"确认" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        if (weakSelf.timer) {
+            [weakSelf.timer invalidate];
+            weakSelf.timer = nil;
+        }
+        isEndCoach = YES;
+        [weakSelf sendCmdDataWithType:WhiteBoardCmdTypeEndCoach]; //发送结束辅导指令
+        [ZYHelper sharedZYHelper].isUpdateOrderList = YES;
+        [weakSelf.view makeToast:@"已结束当前作业辅导" duration:1.0 position:CSToastPositionCenter];
+        [[NIMAVChatSDK sharedSDK].netCallManager hangup:weakSelf.callInfo.callID];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [weakSelf backAction];
+        });
+    }];
+    
+    [alertController addAction:cancelAction];
+    [alertController addAction:confirmAction];
+    [self presentViewController:alertController animated:YES completion:nil];
 }
 
 #pragma mark 返回
 -(void)backAction{
+    [NSUserDefaultsInfos removeObjectForKey:kCallingForID];
     BOOL isOrderIn = NO;
     for (BaseViewController *controller in self.navigationController.viewControllers) {
         if ([controller isKindOfClass:[MyOrderViewController class]]) {
@@ -569,8 +537,6 @@
     [self.view addSubview:self.examView];
     [self.view addSubview:self.callBgImageView];
     [self.view addSubview:self.moreBtn];
-    [self.view addSubview:self.badgeLabel];
-    self.badgeLabel.hidden = YES;
 }
 
 #pragma mark 创建白板
@@ -586,7 +552,7 @@
 -(void)addWhiteboard{
     [_cmdHander sendHandleCmd:WhiteBoardCmdTypeAddWhiteboard index:currentWhiteboardIndex];
     
-    WhiteboardDrawView *drawView = [[WhiteboardDrawView alloc] initWithFrame:CGRectMake(0, KStatusHeight+100, kScreenWidth, kScreenHeight-KStatusHeight-160)];
+    WhiteboardDrawView *drawView = [[WhiteboardDrawView alloc] initWithFrame:IS_IPAD?CGRectMake(0, KStatusHeight+200, kScreenWidth, kScreenHeight-KStatusHeight-295):CGRectMake(0, KStatusHeight+100, kScreenWidth, kScreenHeight-KStatusHeight-160)];
     drawView.backgroundColor = [UIColor whiteColor];
     
     WhiteboardLines *lines = [[WhiteboardLines alloc] init];
@@ -658,10 +624,10 @@
 #pragma mark 图片数量
 -(UILabel *)countLab{
     if (!_countLab) {
-        _countLab = [[UILabel alloc] initWithFrame:CGRectMake(kScreenWidth-50,KStatusHeight+454, 34, 22)];
+        _countLab = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(kScreenWidth-120, kScreenHeight-300, 80, 34):CGRectMake(kScreenWidth-50,KStatusHeight+454, 34, 22)];
         _countLab.textAlignment = NSTextAlignmentRight;
         _countLab.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
-        _countLab.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:16];
+        _countLab.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:IS_IPAD?25:16];
     }
     return _countLab;
 }
@@ -669,13 +635,13 @@
 #pragma mark 通话
 -(UIImageView *)callBgImageView{
     if (!_callBgImageView) {
-        _callBgImageView = [[UIImageView alloc] initWithFrame:CGRectMake((kScreenWidth-72.0)/2.0,kScreenHeight-186, 72, 72)];
+        _callBgImageView = [[UIImageView alloc] initWithFrame:IS_IPAD?CGRectMake((kScreenWidth-115)/2.0, kScreenHeight-307.5, 115, 115): CGRectMake((kScreenWidth-72.0)/2.0,kScreenHeight-186, 72, 72)];
         _callBgImageView.backgroundColor = [UIColor whiteColor];
-        _callBgImageView.boderRadius = 36;
+        _callBgImageView.boderRadius = IS_IPAD?57.5:36;
         
-        UIImageView *callImageView = [[UIImageView alloc] initWithFrame:CGRectMake(1.5,1.5, 69, 69)];
-        callImageView.image = [UIImage imageNamed:@"coach_call"];
-        callImageView.boderRadius = 34.5;
+        UIImageView *callImageView = [[UIImageView alloc] initWithFrame:IS_IPAD?CGRectMake(5, 5, 105, 105):CGRectMake(1.5,1.5, 69, 69)];
+        callImageView.image = IS_IPAD?[UIImage imageNamed:@"coach_call_ipad"]:[UIImage imageNamed:@"coach_call"];
+        callImageView.boderRadius = IS_IPAD?52.5:34.5;
         [_callBgImageView addSubview:callImageView];
     }
     return _callBgImageView;
@@ -684,21 +650,17 @@
 #pragma mark 审题
 -(UIView *)examView{
     if (!_examView) {
-        _examView = [[UIView alloc] initWithFrame:CGRectMake(0, kScreenHeight-163, kScreenWidth, 163)];
+        _examView = [[UIView alloc] initWithFrame:IS_IPAD?CGRectMake(0, kScreenHeight-250, kScreenWidth, 250):CGRectMake(0, kScreenHeight-163, kScreenWidth, 163)];
         _examView.backgroundColor = [UIColor whiteColor];
         
-        UILabel *lab = [[UILabel alloc] initWithFrame:CGRectMake(30, 58, kScreenWidth-60, 17)];
+        UILabel *lab = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(60, 86, kScreenWidth-120, 26):CGRectMake(30, 58, kScreenWidth-60, 17)];
         lab.textAlignment = NSTextAlignmentCenter;
-        lab.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:12];
+        lab.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?18:12];
         lab.textColor = [UIColor colorWithHexString:@"#808080"];
         lab.text = @"语音通话中...";
         [_examView addSubview:lab];
         
-        UIButton *btn = [[UIButton alloc] initWithFrame:CGRectMake((kScreenWidth-240)/2.0, lab.bottom+22, 240, 50)];
-        [btn setBackgroundImage:[UIImage imageNamed:@"button4"] forState:UIControlStateNormal];
-        [btn setTitle:@"开始审题" forState:UIControlStateNormal];
-        [btn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        btn.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:16];
+        LoginButton *btn = [[LoginButton alloc] initWithFrame:IS_IPAD?CGRectMake((kScreenWidth-515)/2.0, lab.bottom+40, 515, 75):CGRectMake((kScreenWidth-240)/2.0, lab.bottom+22, 240, 50) title:@"开始审题"];
         [btn addTarget:self action:@selector(startExamHomeworkAction) forControlEvents:UIControlEventTouchUpInside];
         [_examView addSubview:btn];
     }
@@ -708,7 +670,7 @@
 #pragma mark 开始辅导
 -(LoginButton *)tutoringBtn{
     if (!_tutoringBtn) {
-        _tutoringBtn = [[LoginButton alloc] initWithFrame:CGRectMake((kScreenWidth-280)/2.0, kScreenHeight-75, 280, 60) title:@"开始辅导"];
+        _tutoringBtn = [[LoginButton alloc] initWithFrame:IS_IPAD?CGRectMake((kScreenWidth-515)/2.0,kScreenHeight-90.0,515, 75):CGRectMake((kScreenWidth-280)/2.0, kScreenHeight-75, 280, 60) title:@"开始辅导"];
         [_tutoringBtn addTarget:self action:@selector(startTutoringHomeworkAction) forControlEvents:UIControlEventTouchUpInside];
     }
     return _tutoringBtn;
@@ -717,16 +679,16 @@
 #pragma mark 辅导工具栏
 -(TutorialToolBarView *)toolBarView{
     if (!_toolBarView) {
-        _toolBarView = [[TutorialToolBarView alloc] initWithFrame:CGRectMake(0, kScreenHeight-60, kScreenWidth,60)];
+        _toolBarView = [[TutorialToolBarView alloc] initWithFrame:IS_IPAD?CGRectMake(0, kScreenHeight-95, kScreenWidth, 95):CGRectMake(0, kScreenHeight-60, kScreenWidth,60)];
         _toolBarView.delegate = self;
         
-        UIButton *endBtn = [[UIButton alloc] initWithFrame:CGRectMake(kScreenWidth-100,6,95, 35)];
-        [endBtn setImage:[UIImage imageNamed:@"coach_finish_button"] forState:UIControlStateNormal];
+        UIButton *endBtn = [[UIButton alloc] initWithFrame:IS_IPAD?CGRectMake(kScreenWidth-160, 16, 138, 48):CGRectMake(kScreenWidth-100,6,95, 35)];
+        [endBtn setImage:IS_IPAD?[UIImage imageNamed:@"coach_finish_button_ipad"]:[UIImage imageNamed:@"coach_finish_button"] forState:UIControlStateNormal];
         [endBtn addTarget:self action:@selector(endHomeworkTutoringAction) forControlEvents:UIControlEventTouchUpInside];
         [_toolBarView addSubview:endBtn];
         
-        timeLabel = [[UILabel alloc] initWithFrame:CGRectMake(kScreenWidth-85, endBtn.bottom, 70,17.0)];
-        timeLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:12.0];
+        timeLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(kScreenWidth-160, endBtn.bottom, 138, 26):CGRectMake(kScreenWidth-85, endBtn.bottom, 70,17.0)];
+        timeLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?19.0:12.0];
         timeLabel.textColor = [ UIColor colorWithHexString:@"#4A4A4A"];
         timeLabel.textAlignment = NSTextAlignmentCenter;
         timeLabel.text = @"00:00:00";
@@ -738,7 +700,7 @@
 #pragma mark 画板颜色
 -(SketchpadView *)brushView{
     if (!_brushView) {
-        _brushView = [[SketchpadView alloc] initWithFrame:CGRectMake(0,kScreenHeight-60, kScreenWidth, 0)];
+        _brushView = [[SketchpadView alloc] initWithFrame:IS_IPAD?CGRectMake(0, kScreenHeight-95, kScreenWidth, 0):CGRectMake(0,kScreenHeight-60, kScreenWidth, 0)];
         _brushView.backgroundColor = [UIColor clearColor];
         kSelfWeak;
         _brushView.setColor = ^(NSInteger index) {
@@ -746,7 +708,7 @@
             weakSelf.toolBarView.selColorIndex = index;
             _myDrawColor = [_colors[index] integerValue];
             [UIView animateWithDuration:0.2 animations:^{
-                [weakSelf.brushView setFrame:CGRectMake(0, kScreenHeight-60, kScreenWidth, 0)];
+                [weakSelf.brushView setFrame:IS_IPAD?CGRectMake(0, kScreenHeight-95, kScreenWidth, 0):CGRectMake(0, kScreenHeight-60, kScreenWidth, 0)];
                 [weakSelf.brushView removeFromSuperview];
             } completion:^(BOOL finished) {
                 weakSelf.brushView = nil;
@@ -768,30 +730,22 @@
 #pragma mark 更多
 -(UIButton *)moreBtn{
     if (!_moreBtn) {
-        _moreBtn = [[UIButton alloc] initWithFrame:CGRectMake(kScreenWidth-40, KStatusHeight, 30, 40)];
-        [_moreBtn setImage:[UIImage imageNamed:@"connection_more"] forState:UIControlStateNormal];
+        _moreBtn = [[UIButton alloc] initWithFrame:IS_IPAD?CGRectMake(kScreenWidth-66, KStatusHeight+10, 46, 46):CGRectMake(kScreenWidth-40, KStatusHeight, 30, 40)];
+        [_moreBtn setImage:[UIImage imageNamed:IS_IPAD?@"connection_more_ipad":@"connection_more"] forState:UIControlStateNormal];
         [_moreBtn addTarget:self action:@selector(getMoreHandleListAction) forControlEvents:UIControlEventTouchUpInside];
     }
     return _moreBtn;
-}
-
-#pragma mark 红色标记
--(UILabel *)badgeLabel{
-    if (!_badgeLabel) {
-        _badgeLabel = [[UILabel alloc] initWithFrame:CGRectMake(kScreenWidth-22, KStatusHeight+7, 8, 8)];
-        _badgeLabel.boderRadius = 4.0;
-        _badgeLabel.backgroundColor = [UIColor colorWithHexString:@"#F50000"];
-    }
-    return _badgeLabel;
 }
 
 
 -(void)dealloc{
     MyLog(@"dealloc--%@",NSStringFromClass([self class]));
     
+    [NSUserDefaultsInfos removeObjectForKey:kCallingForID];
+    
+    [[NIMAVChatSDK sharedSDK].netCallManager hangup:self.callInfo.callID];
     [[WhiteboardManager sharedWhiteboardManager] leaveCurrentConference];
     [[NIMSDK sharedSDK].loginManager removeDelegate:self];
-    [[NIMSDK sharedSDK].conversationManager removeDelegate:self];
     
     if (self.timer) {
         [self.timer invalidate];

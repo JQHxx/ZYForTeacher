@@ -44,7 +44,9 @@
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
     cell.imageView.image = [UIImage imageNamed:images[indexPath.row]];
     cell.textLabel.text = titles[indexPath.row];
+    cell.textLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?25:16];
     cell.detailTextLabel.text = values[indexPath.row];
+    cell.detailTextLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?25:16];
     cell.detailTextLabel.textColor = kRGBColor(82, 150, 243);
     return cell;
 }
@@ -69,20 +71,24 @@
     }
 }
 
+-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+    return IS_IPAD?78:50;
+}
+
 #pragma mark 我的主界面
 -(UITableView *)serviceTableView{
     if (!_serviceTableView) {
-        _serviceTableView = [[UITableView alloc] initWithFrame:CGRectMake(0,kNavHeight+3, kScreenWidth, kScreenHeight-kTabHeight) style:UITableViewStylePlain];
+        _serviceTableView = [[UITableView alloc] initWithFrame:CGRectMake(0,kNavHeight+3, kScreenWidth, kScreenHeight-kNavHeight) style:UITableViewStylePlain];
         _serviceTableView.dataSource = self;
         _serviceTableView.delegate = self;
         _serviceTableView.showsVerticalScrollIndicator=NO;
         _serviceTableView.scrollEnabled = NO;
         _serviceTableView.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
         
-        UIView *headView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, kScreenWidth, 240)];
+        UIView *headView = [[UIView alloc] initWithFrame:IS_IPAD?CGRectMake(0, 0, kScreenWidth,360):CGRectMake(0, 0, kScreenWidth, 240)];
         headView.backgroundColor = [UIColor whiteColor];
         
-        UIImageView *imgView = [[UIImageView alloc] initWithFrame:CGRectMake((kScreenWidth-154)/2.0, 60, 154, 120)];
+        UIImageView *imgView = [[UIImageView alloc] initWithFrame:IS_IPAD?CGRectMake((kScreenWidth-224)/2.0, 80, 224, 180):CGRectMake((kScreenWidth-154)/2.0, 60, 154, 120)];
         imgView.image = [UIImage imageNamed:@"images_custom_service"];
         [headView addSubview:imgView];
         _serviceTableView.tableHeaderView = headView;

@@ -12,13 +12,16 @@
 #import "AppDelegate.h"
 #import "LoginViewController.h"
 #import "BaseNavigationController.h"
+#import "LoginButton.h"
+
+#define kAppstoreUrl @"https://itunes.apple.com/cn/app/id1440442719"
 
 @interface SetupViewController ()<UITableViewDelegate,UITableViewDataSource,UIAlertViewDelegate>{
     NSArray  *titlesArray;
 }
 
 @property (nonatomic, strong) UITableView *setupTableView;
-@property (nonatomic, strong) UIButton    *loginoutButton;   //退出登录
+@property (nonatomic, strong) LoginButton    *loginoutButton;   //退出登录
 
 @end
 
@@ -29,7 +32,7 @@
     self.baseTitle = @"设置";
     self.view.backgroundColor = [UIColor bgColor_Gray];
     
-    titlesArray=@[@"清除缓存",@"意见反馈",@"关于我们"];
+    titlesArray=@[@"清除缓存",@"意见反馈",@"评价一下",@"关于我们"];
     
     [self.view addSubview:self.setupTableView];
     [self.view addSubview:self.loginoutButton];
@@ -44,7 +47,7 @@
     UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:nil];
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
     cell.textLabel.text = titlesArray[indexPath.row];
-    cell.textLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+    cell.textLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?25:16];
     
     if (indexPath.row == 0) {
         cell.accessoryType = UITableViewCellAccessoryNone;
@@ -59,10 +62,17 @@
             dataValueStr = [NSString stringWithFormat:@"%.2fMB",fileValue];
         }
         cell.detailTextLabel.text = dataValueStr;
-        cell.detailTextLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+        cell.detailTextLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?25:16];
         cell.detailTextLabel.textColor = [UIColor colorWithHexString:@"#FF6161"];
     }else{
-        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        if (IS_IPAD) {
+            cell.accessoryType = UITableViewCellAccessoryNone;
+            UIImageView *arrowImageView = [[UIImageView alloc] initWithFrame:CGRectMake(kScreenWidth-55.4,27,12.6,23)];
+            arrowImageView.image = [UIImage imageNamed:@"arrow_ipad"];
+            [cell.contentView addSubview:arrowImageView];
+        }else{
+            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        }
     }
     return cell;
 }
@@ -77,6 +87,13 @@
             [weakSelf.view makeToast:@"您的意见已提交!" duration:1.0 position:CSToastPositionCenter];
         };
         [self.navigationController pushViewController:feedbackVC animated:YES];
+    }else if(indexPath.row==2){
+        NSURL * url = [NSURL URLWithString:kAppstoreUrl];
+        if ([[UIApplication sharedApplication] canOpenURL:url]){
+            [[UIApplication sharedApplication] openURL:url];
+        }else{
+            MyLog(@"can not open");
+        }
     }else{
         AboutUsViewController *aboutUsVC = [[AboutUsViewController alloc] init];
         [self.navigationController pushViewController:aboutUsVC animated:YES];
@@ -84,7 +101,15 @@
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    return 50;
+    return IS_IPAD?78:50;
+}
+
+- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath{
+    if (IS_IPAD) {
+        [cell setSeparatorInset:UIEdgeInsetsMake(0,40, 0,40)];
+    }else{
+        [cell setSeparatorInset:UIEdgeInsetsMake(0,21, 0, 0)];
+    }
 }
 
 #pragma mark -- Event reponse
@@ -167,13 +192,10 @@
 }
 
 #pragma mark 退出登录
--(UIButton *)loginoutButton{
+-(LoginButton *)loginoutButton{
     if (!_loginoutButton) {
-        _loginoutButton = [[UIButton alloc] initWithFrame:CGRectMake((kScreenWidth-280)/2.0,kScreenHeight-75.0,280,60)];
-        [_loginoutButton setTitle:@"退出登录" forState:UIControlStateNormal];
-        [_loginoutButton setBackgroundImage:[UIImage imageNamed:@"login_bg_btn"] forState:UIControlStateNormal];
-        [_loginoutButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        _loginoutButton.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:16];
+        CGRect btnFrame = IS_IPAD?CGRectMake((kScreenWidth-515)/2.0,kScreenHeight-85.0,515, 75):CGRectMake(48,kScreenHeight-75.0,kScreenWidth-96, 60);
+        _loginoutButton = [[LoginButton alloc] initWithFrame:btnFrame title:@"退出登录"];
         [_loginoutButton addTarget:self action:@selector(loginoutAction:) forControlEvents:UIControlEventTouchUpInside];
     }
     return _loginoutButton;

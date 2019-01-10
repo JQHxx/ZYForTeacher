@@ -25,6 +25,8 @@
  */
 + (NSString *)currentDate;
 
++(NSString *)GetCurrentDay;
+
 /**
  *  @return 当前时间
  */

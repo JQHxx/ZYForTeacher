@@ -83,7 +83,7 @@
                 }
                 
                 weakSelf.contentView.hidden = NO;
-                weakSelf.contentView.frame = CGRectMake(0, weakSelf.topView.bottom+10, kScreenWidth, 115);
+                weakSelf.contentView.frame = IS_IPAD?CGRectMake(0, weakSelf.topView.bottom+10, kScreenWidth, 173):CGRectMake(0, weakSelf.topView.bottom+10, kScreenWidth, 115);
                 
                 orderSnLabel.text = myBill.extract_no;
                 cardHolderLab.text = myBill.realname;
@@ -112,7 +112,7 @@
             
             timeLabel.text = [[ZYHelper sharedZYHelper] timeWithTimeIntervalNumber:myBill.income_time format:@"yyyy-MM-dd HH:mm:ss"];
            
-            weakSelf.serviceView.frame = CGRectMake(0, weakSelf.contentView.bottom+10, kScreenWidth, 45);
+            weakSelf.serviceView.frame =IS_IPAD?CGRectMake(0, weakSelf.contentView.bottom+10, kScreenWidth,69):CGRectMake(0, weakSelf.contentView.bottom+10, kScreenWidth, 45);
         });
         
     }];
@@ -132,37 +132,37 @@
 #pragma mark 明细类型
 -(UIView *)topView{
     if (!_topView) {
-        _topView = [[UIView alloc] initWithFrame:CGRectMake(0, kNavHeight+3.0, kScreenWidth, 324)];
+        _topView = [[UIView alloc] initWithFrame:IS_IPAD?CGRectMake(0, kNavHeight+6.0, kScreenWidth, 497):CGRectMake(0, kNavHeight+3.0, kScreenWidth, 324)];
         _topView.backgroundColor = [UIColor whiteColor];
         
-        imgView = [[UIImageView alloc] initWithFrame:CGRectMake((kScreenWidth-56)/2.0, 30, 56, 56)];
+        imgView = [[UIImageView alloc] initWithFrame:IS_IPAD?CGRectMake((kScreenWidth-86)/2.0, 45, 86, 86):CGRectMake((kScreenWidth-56)/2.0, 30, 56, 56)];
         [_topView addSubview:imgView];
         
-        typeLabel = [[UILabel alloc] initWithFrame:CGRectMake(60, imgView.bottom+10, kScreenWidth-120, 22)];
-        typeLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+        typeLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(100, imgView.bottom+14, kScreenWidth-200, 36):CGRectMake(60, imgView.bottom+10, kScreenWidth-120, 22)];
+        typeLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?25:16];
         typeLabel.textColor = [UIColor colorWithHexString:@"#808080"];
         typeLabel.textAlignment =NSTextAlignmentCenter;
         [_topView addSubview:typeLabel];
         
-        amountLabel = [[UILabel alloc] initWithFrame:CGRectMake(60,typeLabel.bottom+10.0,kScreenWidth-120, 42)];
-        amountLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:30];
+        amountLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(100, typeLabel.bottom+12, kScreenWidth-200, 65):CGRectMake(60,typeLabel.bottom+10.0,kScreenWidth-120, 42)];
+        amountLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:IS_IPAD?46:30];
         amountLabel.textAlignment = NSTextAlignmentCenter;
         [_topView addSubview:amountLabel];
         
-        UIView *line2 = [[UIView alloc] initWithFrame:CGRectMake(19.0,amountLabel.bottom+40.0, kScreenWidth-37.0, 0.5)];
+        UIView *line2 = [[UIView alloc] initWithFrame:IS_IPAD?CGRectMake(40.0,amountLabel.bottom+60.0, kScreenWidth-80.0, 0.5):CGRectMake(19.0,amountLabel.bottom+40.0, kScreenWidth-37.0, 0.5)];
         line2.backgroundColor = [UIColor colorWithHexString:@"#D8D8D8"];
         [self.view addSubview:line2];
         
         NSArray *titles = @[@"当前状态",@"创建时间",@"交易单号"];
         for (NSInteger i=0; i<titles.count; i++) {
-            UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(28, line2.bottom+13+i*(20+13), 60, 20)];
-            titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:14];
+            UILabel *titleLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(42, line2.bottom+22+i*(30+20), 100, 30):CGRectMake(28, line2.bottom+13+i*(20+13), 60, 20)];
+            titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:IS_IPAD?22:14];
             titleLabel.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
             titleLabel.text = titles[i];
             [_topView addSubview:titleLabel];
             
-            UILabel *valueLabel = [[UILabel alloc] initWithFrame:CGRectMake(kScreenWidth-180, line2.bottom+13+i*(20+13),158, 20)];
-            valueLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:14];
+            UILabel *valueLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(kScreenWidth-290, line2.bottom+22+i*(30+20),250, 30):CGRectMake(kScreenWidth-180, line2.bottom+13+i*(20+13),158, 20)];
+            valueLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?22:14];
             valueLabel.textColor = [UIColor colorWithHexString:@"#808080"];
             valueLabel.textAlignment = NSTextAlignmentRight;
             [_topView addSubview:valueLabel];
@@ -188,14 +188,14 @@
         
         NSArray *titles = @[@"持卡人",@"银行",@"银行卡号"];
         for (NSInteger i=0; i<titles.count; i++) {
-            UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(28, 13+i*(20+13), 60, 20)];
-            titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:14];
+            UILabel *titleLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(42,20+i*(30+20),100, 30):CGRectMake(28, 13+i*(20+13), 60, 20)];
+            titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:IS_IPAD?22:14];
             titleLabel.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
             titleLabel.text = titles[i];
             [_contentView addSubview:titleLabel];
             
-            UILabel *valueLabel = [[UILabel alloc] initWithFrame:CGRectMake(kScreenWidth-180,13+i*(20+13),158, 20)];
-            valueLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:14];
+            UILabel *valueLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(kScreenWidth-290, 22+i*(30+20),250, 30):CGRectMake(kScreenWidth-180,13+i*(20+13),158, 20)];
+            valueLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?22:14];
             valueLabel.textColor = [UIColor colorWithHexString:@"#808080"];
             valueLabel.textAlignment = NSTextAlignmentRight;
             [_contentView addSubview:valueLabel];
@@ -218,13 +218,13 @@
         _serviceView = [[UIView alloc] initWithFrame:CGRectMake(0, self.contentView.bottom+10, kScreenWidth, 45)];
         _serviceView.backgroundColor = [UIColor whiteColor];
         
-        UILabel *lab = [[UILabel alloc] initWithFrame:CGRectMake(28, 13, 60, 20)];
-        lab.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:14];
+        UILabel *lab = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(42, 20, 100, 30):CGRectMake(28, 13, 60, 20)];
+        lab.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:IS_IPAD?22:14];
         lab.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
         lab.text = @"联系客服";
         [_serviceView addSubview:lab];
         
-        UIImageView *arrowImgView = [[UIImageView alloc] initWithFrame:CGRectMake(kScreenWidth-35, 14, 8.2, 15)];
+        UIImageView *arrowImgView = [[UIImageView alloc] initWithFrame:IS_IPAD?CGRectMake(kScreenWidth-45, 23,13,23):CGRectMake(kScreenWidth-35, 14, 8.2, 15)];
         arrowImgView.image = [UIImage imageNamed:@"arrow2_personal_information"];
         [_serviceView addSubview:arrowImgView];
         

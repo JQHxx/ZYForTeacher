@@ -9,11 +9,9 @@
 #import "IntroductionViewController.h"
 #import "UITextView+ZWPlaceHolder.h"
 #import "UITextView+ZWLimitCounter.h"
-#import "BackScrollView.h"
 
 @interface IntroductionViewController ()<UITextViewDelegate>
 
-@property (nonatomic ,strong) BackScrollView *rootView;
 @property (nonatomic ,strong) UITextView *introTextView;
 
 @end
@@ -27,19 +25,20 @@
     self.rigthTitleName = @"保存";
     self.isRightBtnEnable = NO;
     
-    [self.view addSubview:self.rootView];
-    [self.rootView addSubview:self.introTextView];
+    [self.view addSubview:self.introTextView];
     [self.introTextView becomeFirstResponder];
 }
 
 #pragma mark -- Event response
 #pragma mark 取消
 -(void)leftNavigationItemAction{
+    [self.introTextView resignFirstResponder];
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 #pragma mark 保存
 -(void)rightNavigationItemAction{
+    [self.introTextView resignFirstResponder];
     kSelfWeak;
     [self dismissViewControllerAnimated:YES completion:^{
         if (weakSelf.getIntroBlock) {
@@ -54,19 +53,12 @@
 }
 
 #pragma mark -- Getters
--(BackScrollView *)rootView{
-    if (!_rootView) {
-        _rootView = [[BackScrollView alloc] initWithFrame:CGRectMake(0, kNavHeight, kScreenWidth, kScreenHeight-kNavHeight)];
-    }
-    return _rootView;
-}
-
 -(UITextView *)introTextView{
     if (!_introTextView) {
-        _introTextView = [[UITextView alloc] initWithFrame:CGRectMake(10, 10, kScreenWidth-20,kScreenHeight-216-kNavHeight-20)];
+        _introTextView = [[UITextView alloc] initWithFrame:IS_IPAD?CGRectMake(18,kNavHeight+18, kScreenWidth-36, 460):CGRectMake(10, kNavHeight+10, kScreenWidth-20,kScreenHeight-340-kNavHeight)];
         _introTextView.delegate = self;
         _introTextView.backgroundColor = [UIColor colorWithHexString:@"#F6F6F6"];
-        _introTextView.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+        _introTextView.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?24:16];
         _introTextView.zw_placeHolder = @"请简要介绍一下自己，让学生快速了解你";
         _introTextView.zw_limitCount = 500;
         _introTextView.text = kIsEmptyString(self.introStr)?@"":self.introStr;

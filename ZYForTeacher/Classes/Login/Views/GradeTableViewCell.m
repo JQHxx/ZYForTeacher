@@ -11,7 +11,7 @@
 @interface GradeTableViewCell ()
 
 @property (nonatomic ,strong) UILabel     *gradeLabel;
-@property (nonatomic ,strong) UIButton    *selectButton;    //选择
+
 
 @end
 
@@ -20,9 +20,9 @@
 -(instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier{
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
     if (self) {
-        self.selectButton = [[UIButton alloc] initWithFrame:CGRectMake(kScreenWidth-40, 12, 20, 20)];
-        [self.selectButton setImage:[UIImage imageNamed:@"payment_method_choose_gray"] forState:UIControlStateNormal];
-        [self.selectButton setImage:[UIImage imageNamed:@"payment_method_choose"] forState:UIControlStateSelected];
+        self.selectButton = [[UIButton alloc] initWithFrame:IS_IPAD?CGRectMake(kScreenWidth-90, 23, 30, 30):CGRectMake(kScreenWidth-40, 12, 20, 20)];
+        [self.selectButton setImage:[UIImage imageNamed:IS_IPAD?@"grade_choose_gray_ipad":@"payment_method_choose_gray"] forState:UIControlStateNormal];
+        [self.selectButton setImage:[UIImage imageNamed:IS_IPAD?@"grade_choose_ipad":@"payment_method_choose"] forState:UIControlStateSelected];
         [self.contentView addSubview:self.selectButton];
         
     }

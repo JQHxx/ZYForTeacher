@@ -18,6 +18,7 @@
 @interface BankCardListViewController ()<UITableViewDelegate,UITableViewDataSource>
 
 @property (nonatomic ,strong) UITableView    *bankTableView;
+@property (nonatomic, strong) NSMutableArray *bankCardList;
 
 @end
 
@@ -32,6 +33,7 @@
     self.rightImageName = @"add_card_gray";
     
     [self.view addSubview:self.bankTableView];
+    [self loadBankCardsData];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -61,7 +63,7 @@
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    return 95;
+    return IS_IPAD?130:95;
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -115,6 +117,13 @@
         _bankTableView.backgroundColor = [UIColor bgColor_Gray];
     }
     return _bankTableView;
+}
+
+-(NSMutableArray *)bankCardList{
+    if (!_bankCardList) {
+        _bankCardList = [[NSMutableArray alloc] init];
+    }
+    return _bankCardList;
 }
 
 

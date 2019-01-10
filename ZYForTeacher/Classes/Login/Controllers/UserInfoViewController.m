@@ -18,15 +18,16 @@
 #import "AppDelegate.h"
 #import "LoginButton.h"
 #import <NIMSDK/NIMSDK.h>
+#import "AddressPickerView.h"
 
 @interface UserInfoViewController ()<UITableViewDelegate,UITableViewDataSource,UITextFieldDelegate,NIMUserManagerDelegate>{
     UIImage     *selImage;
     NSArray     *titlesArr;
+    UIImageView  *headImageView;
 }
 @property (nonatomic, strong) UILabel            *titleLabel;     //标题
 @property (nonatomic ,strong) UITableView        *userInfoTableView;
 @property (nonatomic, strong) LoginButton        *completeButton;       //确定
-
 
 @end
 
@@ -48,6 +49,18 @@
     }
 }
 
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    
+    [MobClick beginLogPageView:@"个人信息"];
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    
+    [MobClick endLogPageView:@"个人信息"];
+}
+
 #pragma mark -- UITableViewDataSource and UITableViewDelegate
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
     return titlesArr.count+1;
@@ -60,24 +73,25 @@
     if (indexPath.row == 0) {
          cell.accessoryType = UITableViewCellAccessoryNone;
         
-        UIImageView  *bgHeadImgView = [[UIImageView alloc] initWithFrame:CGRectMake((kScreenWidth-112)/2.0, 10, 112, 112)];
+        UIImageView  *bgHeadImgView = [[UIImageView alloc] initWithFrame:IS_IPAD?CGRectMake((kScreenWidth-172.0)/2.0, 20, 172.0, 172.0):CGRectMake((kScreenWidth-112)/2.0, 10, 112, 112)];
         bgHeadImgView.backgroundColor = [UIColor colorWithHexString:@"#F2F2F2"];
-        bgHeadImgView.boderRadius = 56;
+        bgHeadImgView.boderRadius = IS_IPAD?86:56;
         [cell.contentView addSubview:bgHeadImgView];
         
-        UIImageView  *headImageView = [[UIImageView alloc] initWithFrame:CGRectMake((kScreenWidth-100)/2.0, 16,100, 100)];
-        headImageView.boderRadius = 50;
+        headImageView = [[UIImageView alloc] initWithFrame:IS_IPAD?CGRectMake((kScreenWidth-152)/2.0, 30, 152, 152):CGRectMake((kScreenWidth-100)/2.0, 16,100, 100)];
+        headImageView.boderRadius = IS_IPAD?76:50;
         if (kIsEmptyString(self.userModel.trait)) {
-            headImageView.image = [UIImage imageNamed:@"default_head_image"];
+            headImageView.image = [UIImage imageNamed:IS_IPAD?@"default_head_image_ipad":@"default_head_image"];
         }else{
-            [headImageView sd_setImageWithURL:[NSURL URLWithString:self.userModel.trait] placeholderImage:[UIImage imageNamed:@"default_head_image"]];
+            [headImageView sd_setImageWithURL:[NSURL URLWithString:self.userModel.trait] placeholderImage:[UIImage imageNamed:IS_IPAD?@"default_head_image_ipad":@"default_head_image"]];
         }
         [cell.contentView addSubview:headImageView];
+        
     }else{
         cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
         cell.textLabel.text = titlesArr[indexPath.row-1];
-        cell.textLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
-        cell.detailTextLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+        cell.textLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?22:16];
+        cell.detailTextLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?22:16];
         
         if(indexPath.row == 1){
             cell.detailTextLabel.text = self.userModel.tch_name;
@@ -124,15 +138,27 @@
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    return indexPath.row==0?132:50;
+    if (indexPath.row==0) {
+        return IS_IPAD?212:132;
+    }else{
+        return IS_IPAD?76:50;
+    }
+}
+
+- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath{
+    if (IS_IPAD) {
+        [cell setSeparatorInset:UIEdgeInsetsMake(0,40, 0,0)];
+    }else{
+        [cell setSeparatorInset:UIEdgeInsetsMake(0,21, 0, 0)];
+    }
 }
 
 #pragma mark--Delegate
 #pragma mark UIImagePickerController
 -(void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info{
     [self.imgPicker dismissViewControllerAnimated:YES completion:nil];
-    UIImage* curImage=[info objectForKey:UIImagePickerControllerEditedImage];
-    selImage=[curImage cropImageWithSize:CGSizeMake(160, 160)];
+    UIImage* curImage=[info objectForKey:UIImagePickerControllerOriginalImage];
+    selImage=[curImage cropImageWithSize:CGSizeMake(320, 320)];
     
     NSMutableArray *arr = [NSMutableArray arrayWithObjects:selImage, nil];
     NSMutableArray *encodeImageArr = [[ZYHelper sharedZYHelper] imageDataProcessingWithImgArray:arr];
@@ -184,6 +210,10 @@
     }
     
     self.userModel.sex = [self.userModel.sex integerValue]==0?@1:self.userModel.sex;
+    if ([self.userModel.birthday integerValue]==0) {
+        NSString *defaultDate = [NSDate getLastYearDate:20];
+        self.userModel.birthday = [[ZYHelper sharedZYHelper] timeSwitchTimestamp:defaultDate format:@"yyyy年MM月dd日"];
+    }
     NSString *body = [NSString stringWithFormat:@"token=%@&trait=%@&username=%@&sex=%@&birthday=%@&province=%@&city=%@&country=%@&intro=%@",self.userModel.token,self.userModel.trait,self.userModel.tch_name,self.userModel.sex,self.userModel.birthday,self.userModel.province,self.userModel.city,self.userModel.country,self.userModel.intro];
     [self setUserInfoRequestWithBody:body];
 }
@@ -191,7 +221,7 @@
 #pragma mark Private Methods
 #pragma mark 上传照片
 -(void)uploadUserHeadPhotos{
-    [self addPhoto];
+    [self addPhotoForView:headImageView];
 }
 
 #pragma mark 昵称
@@ -275,19 +305,48 @@
 
 #pragma mark 设置所在地区
 -(void)setUserArea{
+    AddressPickerView *addressPickerView = [[AddressPickerView alloc] init];
+    if (!kIsEmptyString(self.userModel.province)&&!(kIsEmptyString(self.userModel.city))) {
+        for (NSInteger i=0;i<addressPickerView.provinces.count;i++) {
+            NSDictionary *dict = addressPickerView.provinces[i];
+            if ([dict[@"state"] isEqualToString:self.userModel.province]) {
+                addressPickerView.province = dict[@"state"];
+                addressPickerView.cities = dict[@"cities"];
+                [addressPickerView.myPickerView selectRow:i inComponent:0 animated:YES];
+            }
+        }
+        for (NSInteger i=0; i<addressPickerView.cities.count; i++) {
+            NSDictionary *cityDict = addressPickerView.cities[i];
+            if ([cityDict[@"city"] isEqualToString:self.userModel.city]) {
+                addressPickerView.city = cityDict[@"city"];
+                addressPickerView.areas = cityDict[@"areas"];
+                [addressPickerView.myPickerView selectRow:i inComponent:1 animated:YES];
+            }
+        }
+        for (NSInteger i=0; i<addressPickerView.areas.count; i++) {
+            NSString *area = addressPickerView.areas[i];
+            if ([area isEqualToString:self.userModel.country]) {
+                addressPickerView.district = area;
+                [addressPickerView.myPickerView selectRow:i inComponent:2 animated:YES];
+            }
+        }
+    }
     kSelfWeak;
-    [BRAddressPickerView showAddressPickerWithTitle:@"所在地区" defaultSelected:@[@0,@0,@0] isAutoSelect:NO resultBlock:^(NSArray *selectAddressArr) {
-        weakSelf.userModel.province = selectAddressArr[0];
-        weakSelf.userModel.city = selectAddressArr[1];
-        weakSelf.userModel.country = selectAddressArr[2];
+    addressPickerView.getAddressCallBack = ^(NSString * _Nonnull province, NSString * _Nonnull city, NSString * _Nonnull town) {
+        weakSelf.userModel.province = province;
+        weakSelf.userModel.city = city;
+        weakSelf.userModel.country = town;
         if (!weakSelf.isLoginIn) {
             NSString *body = [NSString stringWithFormat:@"token=%@&province=%@&city=%@&country=%@",weakSelf.userModel.token,weakSelf.userModel.province,weakSelf.userModel.city,weakSelf.userModel.country];
             [weakSelf setUserInfoRequestWithBody:body];
         }else{
             [weakSelf.userInfoTableView performSelectorOnMainThread:@selector(reloadData) withObject:nil waitUntilDone:YES];
         }
-    }];
+    };
+    [self.view addSubview:addressPickerView];
 }
+
+
 
 #pragma mark 设置个人信息
 -(void)setUserInfoRequestWithBody:(NSString *)body{
@@ -310,16 +369,10 @@
         [ZYHelper sharedZYHelper].isUpdateUserInfo = YES;
         dispatch_sync(dispatch_get_main_queue(), ^{
             if (self.isLoginIn) {
-                if ([self.userModel.tch_label integerValue]==1) {
-                    TeachInfoViewController *teachInfoVC = [[TeachInfoViewController alloc] init];
-                    teachInfoVC.isLoginIn = YES;
-                    teachInfoVC.user = weakSelf.userModel;
-                    [self.navigationController pushViewController:teachInfoVC animated:YES];
-                }else{
-                    [NSUserDefaultsInfos putKey:kIsLogin andValue:[NSNumber numberWithBool:YES]];
-                    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-                    [appDelegate setMyRootViewController];
-                }
+                TeachInfoViewController *teachInfoVC = [[TeachInfoViewController alloc] init];
+                teachInfoVC.isLoginIn = YES;
+                teachInfoVC.user = weakSelf.userModel;
+                [self.navigationController pushViewController:teachInfoVC animated:YES];
             }else{
                 [weakSelf.userInfoTableView reloadData];
             }
@@ -331,8 +384,8 @@
 #pragma mark 标题
 -(UILabel *)titleLabel{
     if (!_titleLabel) {
-        _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(40, kNavHeight+15, 120, 28)];
-        _titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:20];
+        _titleLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(78, kNavHeight+25, 160, 43):CGRectMake(20, kNavHeight+15, 120, 28)];
+        _titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:IS_IPAD?30:20];
         _titleLabel.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
         _titleLabel.text = @"个人信息";
     }
@@ -342,7 +395,7 @@
 #pragma mark 个人信息
 -(UITableView *)userInfoTableView{
     if (!_userInfoTableView) {
-        _userInfoTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, self.titleLabel.bottom+10, kScreenWidth, kScreenHeight-kNavHeight) style:UITableViewStylePlain];
+        _userInfoTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, self.titleLabel.bottom+10, kScreenWidth, kScreenHeight-self.titleLabel.bottom-10) style:UITableViewStylePlain];
         _userInfoTableView.delegate = self;
         _userInfoTableView.dataSource = self;
         _userInfoTableView.tableFooterView = [[UIView alloc] init];
@@ -353,14 +406,12 @@
 #pragma mark 确定
 -(LoginButton *)completeButton{
     if (!_completeButton) {
-        NSString *titleStr = nil;
-        titleStr = [self.userModel.tch_label integerValue] == 1?@"下一步":@"确定";
-        _completeButton = [[LoginButton alloc] initWithFrame:CGRectMake(48.0,self.titleLabel.bottom+132+50*5+20, kScreenWidth-95.0, (kScreenWidth-95.0)*(128.0/588.0)) title:titleStr];
+        CGRect btnFrame = IS_IPAD?CGRectMake((kScreenWidth-515)/2.0,self.titleLabel.bottom+212+76*5+100,515, 75):CGRectMake(48,self.titleLabel.bottom+132+50*5+20,kScreenWidth-96, 60);
+        _completeButton = [[LoginButton alloc] initWithFrame:btnFrame title:@"下一步"];
         [_completeButton addTarget:self action:@selector(confirmSetUserInfoAction) forControlEvents:UIControlEventTouchUpInside];
     }
     return _completeButton;
 }
-
 
 
 @end

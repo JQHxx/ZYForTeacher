@@ -54,6 +54,18 @@
     [self loadWalletDetailsData];
 }
 
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    
+    [MobClick beginLogPageView:@"我的钱包"];
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    
+    [MobClick endLogPageView:@"我的钱包"];
+}
+
 #pragma mark 状态栏
 -(UIStatusBarStyle)preferredStatusBarStyle{
     return UIStatusBarStyleLightContent;
@@ -81,7 +93,7 @@
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    return 68;
+    return IS_IPAD?104:68;
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -91,6 +103,14 @@
     WalletDetailsViewController *walletDetailsVC = [[WalletDetailsViewController alloc] init];
     walletDetailsVC.incomeNo = model.income_no;
     [self.navigationController pushViewController:walletDetailsVC animated:YES];
+}
+
+- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath{
+    if (IS_IPAD) {
+        [cell setSeparatorInset:UIEdgeInsetsMake(0, 38, 0, 0)];
+    }else{
+        [cell setSeparatorInset:UIEdgeInsetsMake(0,18, 0, 0)];
+    }
 }
 
 
@@ -236,33 +256,33 @@
 #pragma mark 账户余额
 -(UIView *)balanceView{
     if (!_balanceView) {
-        _balanceView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, kScreenWidth, 183)];
+        _balanceView = [[UIView alloc] initWithFrame:IS_IPAD?CGRectMake(0, 0, kScreenWidth, 314):CGRectMake(0, 0, kScreenWidth, 183)];
         
         UIImageView *bgImageView = [[UIImageView alloc] initWithFrame:_balanceView.bounds];
         bgImageView.image = [UIImage imageNamed:@"wallet_background"];
         [_balanceView addSubview:bgImageView];
         
-        UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(60,30, kScreenWidth-120, 22)];
-        titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+        UILabel *titleLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(60, 42, kScreenWidth-120, 36):CGRectMake(60,30, kScreenWidth-120, 22)];
+        titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?25:16];
         titleLabel.textColor = [UIColor whiteColor];
         titleLabel.textAlignment = NSTextAlignmentCenter;
         titleLabel.text = @"账户余额（元）";
         [_balanceView addSubview:titleLabel];
         
         
-        balanceLabel = [[UILabel alloc] initWithFrame:CGRectMake(30,titleLabel.bottom+2.0, kScreenWidth-60, 48)];
-        balanceLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleSemibold size:34];
+        balanceLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(30, titleLabel.bottom+5.0, kScreenWidth-60, 75):CGRectMake(30,titleLabel.bottom+2.0, kScreenWidth-60, 48)];
+        balanceLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleSemibold size:IS_IPAD?52:34];
         balanceLabel.textColor = [UIColor whiteColor];
         balanceLabel.textAlignment = NSTextAlignmentCenter;
         [_balanceView addSubview:balanceLabel];
         
-        UIButton *withdrawBtn = [[UIButton alloc] initWithFrame:CGRectMake((kScreenWidth-103)/2.0, balanceLabel.bottom+19, 103, 33)];
+        UIButton *withdrawBtn = [[UIButton alloc] initWithFrame:IS_IPAD?CGRectMake((kScreenWidth-230.0)/2.0, balanceLabel.bottom+30.0, 230, 52):CGRectMake((kScreenWidth-103)/2.0, balanceLabel.bottom+19, 103, 33)];
         withdrawBtn.layer.borderColor = [UIColor whiteColor].CGColor;
         withdrawBtn.layer.borderWidth = 1.0;
         withdrawBtn.layer.cornerRadius = 2.0;
         [withdrawBtn setTitle:@"提现" forState:UIControlStateNormal];
         [withdrawBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        withdrawBtn.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:16];
+        withdrawBtn.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:IS_IPAD?25:16];
         [withdrawBtn addTarget:self action:@selector(toWithdrawAction) forControlEvents:UIControlEventTouchUpInside];
         [_balanceView addSubview:withdrawBtn];
     }
@@ -309,7 +329,7 @@
 #pragma mark 明细头部视图
 -(BillHeaderView *)headerView{
     if (!_headerView) {
-        _headerView = [[BillHeaderView alloc] initWithFrame:CGRectMake(0, 0, kScreenWidth, 46)];
+        _headerView = [[BillHeaderView alloc] initWithFrame:IS_IPAD?CGRectMake(0, 0, kScreenWidth, 72):CGRectMake(0, 0, kScreenWidth, 46)];
         _headerView.delegate = self;
     }
     return _headerView;
@@ -318,7 +338,7 @@
 #pragma mark 明细头部视图
 -(BillHeaderView *)headerCoverView{
     if (!_headerCoverView) {
-        _headerCoverView = [[BillHeaderView alloc] initWithFrame:CGRectMake(0,kNavHeight, kScreenWidth, 46)];
+        _headerCoverView = [[BillHeaderView alloc] initWithFrame:IS_IPAD?CGRectMake(0,kNavHeight, kScreenWidth, 72):CGRectMake(0,kNavHeight, kScreenWidth, 46)];
         _headerCoverView.delegate = self;
     }
     return _headerCoverView;

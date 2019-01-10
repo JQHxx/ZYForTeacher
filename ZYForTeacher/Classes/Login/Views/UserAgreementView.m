@@ -18,15 +18,15 @@
         
         UILabel *label1 = [[UILabel alloc] initWithFrame:CGRectZero];
         label1.textColor = [UIColor colorWithHexString:@"#808080"];
-        label1.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:14.0];
+        label1.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?24:14.0];
         label1.text = [tempStr substringToIndex:len];
-        CGFloat labW1 = [label1.text boundingRectWithSize:CGSizeMake(kScreenWidth, 20) withTextFont:label1.font].width;
-        label1.frame = CGRectMake(0, 0, labW1, 20);
+        CGFloat labW1 = [label1.text boundingRectWithSize:IS_IPAD?CGSizeMake(kScreenWidth, 36):CGSizeMake(kScreenWidth, 20) withTextFont:label1.font].width;
+        label1.frame = IS_IPAD?CGRectMake(0, 0, labW1, 36):CGRectMake(0, 0, labW1, 20);
         [self addSubview:label1];
         
-        UILabel *label2 = [[UILabel alloc] initWithFrame:CGRectMake(label1.right,0, frame.size.width-labW1, 20)];
+        UILabel *label2 = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(label1.right, 0, frame.size.width-labW1, 36):CGRectMake(label1.right,0, frame.size.width-labW1, 20)];
         label2.textColor = [UIColor colorWithHexString:@"#FF727A"];
-        label2.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:14.0];
+        label2.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?24:14.0];
         
         NSString *textStr = [tempStr substringFromIndex:len];
         // 下划线

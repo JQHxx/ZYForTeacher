@@ -32,6 +32,18 @@
     [self initRegisterSuccessView];
 }
 
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    
+    [MobClick beginLogPageView:@"设置新密码"];
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    
+    [MobClick endLogPageView:@"设置新密码"];
+}
+
 #pragma mark -- Event response
 #pragma mark 完成设置
 -(void)confirmSetPwdAction{
@@ -109,9 +121,21 @@
     [self.view addSubview:self.confirmPwdTextView];
     
     for (NSInteger i=0; i<2; i++) {
-        UIButton *visibleButton = [[UIButton alloc] initWithFrame:CGRectMake(kScreenWidth-52,self.passwordTextView.top+16+i*62, 27, 16)];
-        [visibleButton setImage:[UIImage imageNamed:@"register_password_hide"] forState:UIControlStateNormal];
-        [visibleButton setImage:[UIImage imageNamed:@"register_password_show"] forState:UIControlStateSelected];
+        CGRect visFrame;
+        UIImage *normalImage;
+        UIImage *selimage;
+        if (IS_IPAD) {
+            visFrame = CGRectMake(kScreenWidth-104,self.passwordTextView.top+32+i*85, 35, 21);
+            normalImage = [UIImage drawImageWithName:@"login_password_hide_ipad" size:CGSizeMake(35, 21)];
+            selimage = [UIImage drawImageWithName:@"login_password_show_ipad" size:CGSizeMake(35, 21)];
+        }else{
+            visFrame = CGRectMake(kScreenWidth-52,self.passwordTextView.top+16+i*62, 27, 16);
+            normalImage = [UIImage drawImageWithName:@"login_password_hide" size:CGSizeMake(27, 16)];
+            selimage = [UIImage drawImageWithName:@"login_password_show" size:CGSizeMake(27, 16)];
+        }
+        UIButton *visibleButton = [[UIButton alloc] initWithFrame:visFrame];
+        [visibleButton setImage:normalImage forState:UIControlStateNormal];
+        [visibleButton setImage:selimage forState:UIControlStateSelected];
         visibleButton.tag = i;
         [visibleButton addTarget:self action:@selector(setPasswordVisibleAction:) forControlEvents:UIControlEventTouchUpInside];
         [self.view addSubview:visibleButton];
@@ -124,8 +148,8 @@
 #pragma mark 标题
 -(UILabel *)titleLabel{
     if (!_titleLabel) {
-        _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(44, kNavHeight+15, 120, 28)];
-        _titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:20];
+        _titleLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(78, kNavHeight+24, 200, 42):CGRectMake(44, kNavHeight+15, 120, 28)];
+        _titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:IS_IPAD?30:20];
         _titleLabel.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
         _titleLabel.text = @"设置新密码";
     }
@@ -135,7 +159,7 @@
 #pragma mark 密码
 -(LoginTextView *)passwordTextView{
     if (!_passwordTextView) {
-        _passwordTextView = [[LoginTextView alloc] initWithFrame:CGRectMake(26.0, self.titleLabel.bottom+30, kScreenWidth - 51.0, 52.0) placeholder:@"请输入6-14位字母数字组合密码" icon:@"register_password" isNumber:NO];
+        _passwordTextView = [[LoginTextView alloc] initWithFrame:IS_IPAD?CGRectMake(50, self.titleLabel.bottom+45, kScreenWidth-100, 85):CGRectMake(26.0, self.titleLabel.bottom+30, kScreenWidth - 51.0, 52.0) placeholder:@"请输入6-14位字母数字组合密码" icon:@"register_password" isNumber:NO];
         _passwordTextView.myText.delegate = self;
         _passwordTextView.myText.secureTextEntry = YES;
     }
@@ -145,7 +169,7 @@
 #pragma mark 确认密码
 -(LoginTextView *)confirmPwdTextView{
     if (!_confirmPwdTextView) {
-        _confirmPwdTextView = [[LoginTextView alloc] initWithFrame:CGRectMake(26, self.passwordTextView.bottom+10, kScreenWidth - 51, 52) placeholder:@"请重新输入密码" icon:@"register_password" isNumber:NO];
+        _confirmPwdTextView = [[LoginTextView alloc] initWithFrame:IS_IPAD?CGRectMake(50, self.passwordTextView.bottom, kScreenWidth-100, 85):CGRectMake(50, self.passwordTextView.bottom, kScreenWidth - 100,85) placeholder:@"请重新输入密码" icon:@"register_password" isNumber:NO];
         _confirmPwdTextView.myText.delegate = self;
         _confirmPwdTextView.myText.secureTextEntry = YES;
     }
@@ -156,7 +180,8 @@
 #pragma mark 确定
 -(LoginButton *)completeButton{
     if (!_completeButton) {
-        _completeButton = [[LoginButton alloc] initWithFrame:CGRectMake(48.0, self.confirmPwdTextView.bottom+37.0, kScreenWidth-95.0, (kScreenWidth-95.0)*(128.0/588.0)) title:@"确定"];
+         CGRect btnFrame = IS_IPAD?CGRectMake((kScreenWidth-515)/2.0, self.confirmPwdTextView.bottom+60.0,515, 75):CGRectMake(48,  self.confirmPwdTextView.bottom+37.0,kScreenWidth-96, 60);
+        _completeButton = [[LoginButton alloc] initWithFrame:btnFrame title:@"确定"];
         [_completeButton addTarget:self action:@selector(confirmSetPwdAction) forControlEvents:UIControlEventTouchUpInside];
     }
     return _completeButton;

@@ -11,6 +11,8 @@
 
 @interface UserDetailsViewController : BaseViewController
 
+@property (nonatomic,assign) BOOL     isHomeworkIn; 
+
 @property (nonatomic,strong) UserModel  *userInfo;
 
 @end

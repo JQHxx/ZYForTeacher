@@ -57,7 +57,7 @@ singleton_implementation(TCHttpRequest)
 #pragma mark 网络请求封装 post（不带加载器）
 +(void)postMethodWithoutLoadingForURL:(NSString *)urlStr body:(NSString *)bodyStr success:(HttpSuccess)success{
     NSString *urlString=[NSString stringWithFormat:kHostTempURL,urlStr];
-    [[TCHttpRequest sharedTCHttpRequest]requstMethod:@"POST" url:urlString body:bodyStr isLoading:NO success:^(id json) {
+    [[TCHttpRequest sharedTCHttpRequest] requstMethod:@"POST" url:urlString body:bodyStr isLoading:NO success:^(id json) {
         success(json);
     } failure:^(NSString *errorStr) {
         MyLog(@"urlStr：%@， error:%@",urlStr,errorStr);

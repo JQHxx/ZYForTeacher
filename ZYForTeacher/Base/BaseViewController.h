@@ -7,6 +7,8 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <UMAnalytics/MobClick.h>
+#import "UIButton+Touch.h"
 
 
 typedef void(^BaseReturnBackBlock)(id object);
@@ -32,7 +34,7 @@ typedef void(^BaseReturnBackBlock)(id object);
 
 -(void)leftNavigationItemAction;
 -(void)rightNavigationItemAction;
--(void)addPhoto;
+-(void)addPhotoForView:(UIView *)view;
 //跳转处理
 -(void)pushTagetViewController:(BaseViewController *)controller;
 

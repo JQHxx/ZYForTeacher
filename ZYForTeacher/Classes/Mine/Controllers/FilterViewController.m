@@ -12,10 +12,10 @@
 
 #import "LabelsView.h"
 
-#define kMyHeight 200
 
 @interface FilterViewController (){
     NSArray   *typesArray;
+    CGFloat   myHeight;
 }
 
 @property (nonatomic, strong) UILabel      *titleLabel;              //标题
@@ -30,8 +30,9 @@
 -(instancetype)init{
     self = [super init];
     if (self) {
-        self.contentSizeInPopup = CGSizeMake(kScreenWidth, kMyHeight);
-        self.landscapeContentSizeInPopup = CGSizeMake(kScreenHeight, kMyHeight);
+        myHeight = IS_IPAD?287:200;
+        self.contentSizeInPopup = CGSizeMake(kScreenWidth, myHeight);
+        self.landscapeContentSizeInPopup = CGSizeMake(kScreenHeight, myHeight);
     }
     return self;
 }
@@ -44,6 +45,18 @@
     
     [self initFilterView];
     
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    
+    [MobClick beginLogPageView:@"交易类型"];
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    
+    [MobClick endLogPageView:@"交易类型"];
 }
 
 #pragma mark -- Event Response
@@ -70,7 +83,8 @@
     [self.view addSubview:self.titleLabel];
     [self.view addSubview:self.cancelButton];
     
-    UILabel *line = [[UILabel alloc] initWithFrame:CGRectMake(0, 45, kScreenWidth, 0.5)];
+    CGRect lineFrame = IS_IPAD?CGRectMake(0, 69, kScreenWidth, 0.5):CGRectMake(0, 45, kScreenWidth, 0.5);
+    UILabel *line = [[UILabel alloc] initWithFrame:lineFrame];
     line.backgroundColor = [UIColor colorWithHexString:@"#D8D8D8"];
     [self.view addSubview:line];
     
@@ -83,8 +97,10 @@
 #pragma mark 标题
 -(UILabel *)titleLabel{
     if (!_titleLabel) {
-        _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(80, 12, kScreenWidth-160, 22)];
-        _titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:16];
+        CGRect titleFrame = IS_IPAD?CGRectMake(120, 17, kScreenWidth-240, 36):CGRectMake(80, 12, kScreenWidth-160, 22);
+        CGFloat fontSize = IS_IPAD?25:16;
+        _titleLabel = [[UILabel alloc] initWithFrame:titleFrame];
+        _titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:fontSize];
         _titleLabel.text = @"交易类型";
         _titleLabel.textAlignment = NSTextAlignmentCenter;
     }
@@ -94,10 +110,12 @@
 #pragma mark 关闭
 -(UIButton *)cancelButton{
     if(!_cancelButton){
-        _cancelButton = [[UIButton alloc] initWithFrame:CGRectMake(16, 12, 32,22)];
+        CGRect titleFrame = IS_IPAD?CGRectMake(20, 17,60, 36):CGRectMake(16, 12, 32,22);
+        CGFloat fontSize = IS_IPAD?25:16;
+        _cancelButton = [[UIButton alloc] initWithFrame:titleFrame];
         [_cancelButton setTitle:@"取消" forState:UIControlStateNormal];
         [_cancelButton setTitleColor:[UIColor colorWithHexString:@"#4A4A4A"] forState:UIControlStateNormal];
-        _cancelButton.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+        _cancelButton.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:fontSize];
         [_cancelButton addTarget:self action:@selector(closeTansactionViewAction:) forControlEvents:UIControlEventTouchUpInside];
     }
     return _cancelButton;
@@ -113,7 +131,7 @@
         kSelfWeak;
         __weak typeof(_typeLabelsView) weakLabelsView = _typeLabelsView;
         _typeLabelsView.viewHeightRecalc = ^(CGFloat height) {
-            weakLabelsView.frame = CGRectMake(0, weakSelf.titleLabel.bottom+33, kScreenWidth, height);
+            weakLabelsView.frame = CGRectMake(0, weakSelf.titleLabel.bottom+43, kScreenWidth, height);
         };
         _typeLabelsView.didClickItem = ^(NSInteger itemIndex) {
             weakSelf.transactionType = itemIndex==0?4:itemIndex;
@@ -125,10 +143,11 @@
 #pragma mark 确定
 -(UIButton *)confirmButton{
     if (!_confirmButton) {
-        _confirmButton = [[UIButton alloc] initWithFrame:CGRectMake(43, kMyHeight-(kScreenWidth-95)*(128.0/588.0)-20, kScreenWidth-95,(kScreenWidth-95)*(128.0/588.0))];
+        CGRect btnFrame = IS_IPAD?CGRectMake((kScreenWidth-515)/2.0,myHeight-95,515, 75):CGRectMake(48,myHeight-80,kScreenWidth-96, 60);
+        _confirmButton = [[UIButton alloc] initWithFrame:btnFrame];
         [_confirmButton setTitle:@"确定" forState:UIControlStateNormal];
         [_confirmButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        [_confirmButton setBackgroundImage:[UIImage imageNamed:@"login_bg_btn"] forState:UIControlStateNormal];
+        [_confirmButton setBackgroundImage:IS_IPAD?[UIImage imageNamed:@"login_bg_btn_ipad"]:[UIImage imageNamed:@"login_bg_btn"] forState:UIControlStateNormal];
         [_confirmButton addTarget:self action:@selector(confirmSelectedTransactionTypeAction:) forControlEvents:UIControlEventTouchUpInside];
     }
     return _confirmButton;

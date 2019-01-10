@@ -42,11 +42,23 @@
     [self initRegisterView];
 }
 
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    
+    [MobClick beginLogPageView:@"注册"];
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    
+    [MobClick endLogPageView:@"注册"];
+}
+
+
 #pragma mark -- Event response
 #pragma mark 注册
 -(void)registerAction{
     NSString *phoneStr = self.phoneTextView.myText.text;
-    
     NSString *codeStr = self.securityCodeTextView.myText.text;
     
     if (kIsEmptyString(phoneStr)) {
@@ -96,6 +108,7 @@
     [TCHttpRequest postMethodWithURL:kRegisterAPI body:body success:^(id json) {
         NSDictionary *data = [json objectForKey:@"data"];
         UserModel *model = [[UserModel alloc] init];
+        [model setValues:data];
         
         [NSUserDefaultsInfos putKey:kLoginPhone andValue:phoneStr];
         [NSUserDefaultsInfos putKey:kUserID andValue:data[@"tid"]];
@@ -107,14 +120,6 @@
         [NSUserDefaultsInfos putKey:kAuthIdentidy andValue:model.auth_id];   //实名认证
         [NSUserDefaultsInfos putKey:kAuthEducation andValue:model.auth_edu];  //学历认证
         
-        
-        model.tid = data[@"tid"];
-        model.token = data[@"token"];
-        
-        if (!kIsEmptyString(model.trait)&&!kIsEmptyString(model.tch_name)&!kIsEmptyString(model.subject)) {
-            NSMutableDictionary *userDict = [[NSMutableDictionary alloc] initWithObjectsAndKeys:model.tid,@"tch_id",model.trait,@"trait",model.tch_name,@"tch_name",model.grade,@"grade",model.subject,@"subject",model.score,@"score",model.guide_price,@"guide_price",model.guide_time,@"guide_time",model.check_num,@"check_num",nil];
-            [NSUserDefaultsInfos putKey:kUserInfo anddict:userDict];
-        }
         //登录网易云
         [[[NIMSDK sharedSDK] loginManager] login:model.third_id token:model.third_token completion:^(NSError * _Nullable error) {
             if (error) {
@@ -271,9 +276,21 @@
     [self.view addSubview:self.confirmPwdTextView];
     
     for (NSInteger i=0; i<2; i++) {
-        UIButton *visibleButton = [[UIButton alloc] initWithFrame:CGRectMake(kScreenWidth-52,self.passwordTextView.top+16+i*62, 27, 16)];
-        [visibleButton setImage:[UIImage imageNamed:@"register_password_hide"] forState:UIControlStateNormal];
-        [visibleButton setImage:[UIImage imageNamed:@"register_password_show"] forState:UIControlStateSelected];
+        CGRect visFrame;
+        UIImage *normalImage;
+        UIImage *selimage;
+        if (IS_IPAD) {
+            visFrame = CGRectMake(kScreenWidth-104,self.passwordTextView.top+32+i*85, 35, 21);
+            normalImage = [UIImage drawImageWithName:@"login_password_hide_ipad" size:CGSizeMake(35, 21)];
+            selimage = [UIImage drawImageWithName:@"login_password_show_ipad" size:CGSizeMake(35, 21)];
+        }else{
+            visFrame = CGRectMake(kScreenWidth-52,self.passwordTextView.top+16+i*62, 27, 16);
+            normalImage = [UIImage drawImageWithName:@"login_password_hide" size:CGSizeMake(27, 16)];
+            selimage = [UIImage drawImageWithName:@"login_password_show" size:CGSizeMake(27, 16)];
+        }
+        UIButton *visibleButton = [[UIButton alloc] initWithFrame:visFrame];
+        [visibleButton setImage:normalImage forState:UIControlStateNormal];
+        [visibleButton setImage:selimage forState:UIControlStateSelected];
         visibleButton.tag = i;
         [visibleButton addTarget:self action:@selector(setPasswordVisibleAction:) forControlEvents:UIControlEventTouchUpInside];
         [self.view addSubview:visibleButton];
@@ -289,8 +306,8 @@
 #pragma mark 标题
 -(UILabel *)titleLabel{
     if (!_titleLabel) {
-        _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(44, kNavHeight+15, 120, 28)];
-        _titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:20];
+        _titleLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(78, kNavHeight+24, 200, 42):CGRectMake(44, kNavHeight+15, 120, 28)];
+        _titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:IS_IPAD?30:20];
         _titleLabel.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
         _titleLabel.text = @"手机号注册";
     }
@@ -300,7 +317,7 @@
 #pragma mark 手机号
 -(LoginTextView *)phoneTextView{
     if (!_phoneTextView) {
-        _phoneTextView = [[LoginTextView alloc] initWithFrame:CGRectMake(26.0,self.titleLabel.bottom+30.0, kScreenWidth-51.0, 52) placeholder:@"请输入手机号码" icon:@"register_phone" isNumber:YES];
+        _phoneTextView = [[LoginTextView alloc] initWithFrame:IS_IPAD?CGRectMake(50, self.titleLabel.bottom+45, kScreenWidth-100, 85):CGRectMake(26.0,self.titleLabel.bottom+30.0, kScreenWidth-51.0, 52) placeholder:@"请输入手机号码" icon:@"register_phone" isNumber:YES];
         _phoneTextView.myText.delegate = self;
     }
     return _phoneTextView;
@@ -309,7 +326,7 @@
 #pragma mark 验证码
 -(LoginTextView *)securityCodeTextView{
     if (!_securityCodeTextView) {
-        _securityCodeTextView = [[LoginTextView alloc] initWithFrame:CGRectMake(26.0, self.phoneTextView.bottom+10,kScreenWidth-175, 52.0) placeholder:@"请输入验证码" icon:@"register_message" isNumber:YES];
+        _securityCodeTextView = [[LoginTextView alloc] initWithFrame:IS_IPAD?CGRectMake(50, self.phoneTextView.bottom, kScreenWidth-100, 85):CGRectMake(26.0, self.phoneTextView.bottom+10,kScreenWidth-155, 52.0) placeholder:@"请输入验证码" icon:@"register_message" isNumber:YES];
         _securityCodeTextView.myText.delegate = self;
     }
     return _securityCodeTextView;
@@ -318,12 +335,13 @@
 #pragma mark 获取验证码
 -(UIButton *)getCodeButton{
     if (!_getCodeButton) {
-        _getCodeButton = [[UIButton alloc] initWithFrame:CGRectMake(kScreenWidth-143.0, self.phoneTextView.bottom+20,112.0, 33)];
+        _getCodeButton = [[UIButton alloc] initWithFrame:IS_IPAD?CGRectMake(kScreenWidth-190,self.phoneTextView.bottom+17, 140, 50):CGRectMake(kScreenWidth-120.0, self.phoneTextView.bottom+20,100.0, 33)];
         [_getCodeButton setTitle:@"获取验证码" forState:UIControlStateNormal];
         _getCodeButton.layer.cornerRadius = 4;
         _getCodeButton.layer.borderColor = [UIColor colorWithHexString:@"#FF7568"].CGColor;
         _getCodeButton.layer.borderWidth = 1.0;
-        _getCodeButton.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+        CGFloat fontSize = kScreenWidth<375.0?14:16;
+        _getCodeButton.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?25:fontSize];
         [_getCodeButton setTitleColor:[UIColor colorWithHexString:@"#FF7568"] forState:UIControlStateNormal];
         [_getCodeButton addTarget:self action:@selector(getSecurityCodeAction:) forControlEvents:UIControlEventTouchUpInside];
     }
@@ -333,7 +351,7 @@
 #pragma mark 密码
 -(LoginTextView *)passwordTextView{
     if (!_passwordTextView) {
-        _passwordTextView = [[LoginTextView alloc] initWithFrame:CGRectMake(26.0, self.securityCodeTextView.bottom+10, kScreenWidth - 51.0, 52.0) placeholder:@"请输入密码" icon:@"register_password" isNumber:NO];
+        _passwordTextView = [[LoginTextView alloc] initWithFrame:IS_IPAD?CGRectMake(50, self.securityCodeTextView.bottom, kScreenWidth-100, 85):CGRectMake(26.0, self.securityCodeTextView.bottom+10, kScreenWidth - 51.0, 52.0) placeholder:@"请输入密码" icon:@"register_password" isNumber:NO];
         _passwordTextView.myText.delegate = self;
         _passwordTextView.myText.secureTextEntry = YES;
         _passwordTextView.myText.keyboardType = UIKeyboardTypeASCIICapable;
@@ -344,7 +362,7 @@
 #pragma mark 确认密码
 -(LoginTextView *)confirmPwdTextView{
     if (!_confirmPwdTextView) {
-        _confirmPwdTextView = [[LoginTextView alloc] initWithFrame:CGRectMake(26, self.passwordTextView.bottom+10, kScreenWidth - 51, 52) placeholder:@"请重新输入密码" icon:@"register_password" isNumber:NO];
+        _confirmPwdTextView = [[LoginTextView alloc] initWithFrame:IS_IPAD?CGRectMake(50, self.passwordTextView.bottom, kScreenWidth-100, 85):CGRectMake(26, self.passwordTextView.bottom+10, kScreenWidth - 51, 52) placeholder:@"请重新输入密码" icon:@"register_password" isNumber:NO];
         _confirmPwdTextView.myText.delegate = self;
         _confirmPwdTextView.myText.secureTextEntry = YES;
         _confirmPwdTextView.myText.keyboardType = UIKeyboardTypeASCIICapable;
@@ -355,9 +373,9 @@
 #pragma mark 选择是否同意
 -(UIButton *)selButton{
     if (!_selButton) {
-        _selButton = [[UIButton alloc] initWithFrame:CGRectMake((kScreenWidth-220)/2.0, self.confirmPwdTextView.bottom+40.0, 16, 16)];
-        [_selButton setImage:[UIImage imageNamed:@"login_agreement"] forState:UIControlStateNormal];
-        [_selButton setImage:[UIImage imageNamed:@"login_agreement_agree"] forState:UIControlStateSelected];
+        _selButton = [[UIButton alloc] initWithFrame:IS_IPAD?CGRectMake((kScreenWidth-322)/2.0, self.confirmPwdTextView.bottom+53, 30, 30):CGRectMake((kScreenWidth-220)/2.0, self.confirmPwdTextView.bottom+40.0, 16, 16)];
+        [_selButton setImage:[UIImage imageNamed:IS_IPAD?@"login_agreement_ipad":@"login_agreement"] forState:UIControlStateNormal];
+        [_selButton setImage:[UIImage imageNamed:IS_IPAD?@"login_agreement_agree_ipad":@"login_agreement_agree"] forState:UIControlStateSelected];
         [_selButton addTarget:self action:@selector(chooseForDidReadUserAgreement:) forControlEvents:UIControlEventTouchUpInside];
         _selButton.selected = YES;
     }
@@ -368,13 +386,14 @@
 -(UserAgreementView *)agreementView{
     if (!_agreementView) {
         NSString * tempStr = @"我已阅读并同意《用户服务协议》";
-        CGFloat labW = [tempStr boundingRectWithSize:CGSizeMake(kScreenWidth, 20) withTextFont:[UIFont pingFangSCWithWeight:FontWeightStyleRegular size:12]].width;
-        _agreementView = [[UserAgreementView alloc] initWithFrame:CGRectMake(self.selButton.right+5,self.confirmPwdTextView.bottom +38, labW+40, 20) string:tempStr];
+        CGFloat labW = [tempStr boundingRectWithSize:IS_IPAD?CGSizeMake(kScreenWidth, 36): CGSizeMake(kScreenWidth, 20) withTextFont:[UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?22:12]].width;
+        _agreementView = [[UserAgreementView alloc] initWithFrame:IS_IPAD?CGRectMake(self.selButton.right+6, self.confirmPwdTextView.bottom+50, labW+40, 36):CGRectMake(self.selButton.right+5,self.confirmPwdTextView.bottom +38, labW+40, 20) string:tempStr];
         kSelfWeak;
         _agreementView.clickAction = ^{
             BaseWebViewController *userAgreementVC = [[BaseWebViewController alloc] init];
             userAgreementVC.webTitle = @"用户服务协议";
             userAgreementVC.urlStr = kUserAgreementURL;
+            userAgreementVC.webType = WebViewTypeUserAgreement;
             [weakSelf.navigationController pushViewController:userAgreementVC animated:YES];
         };
     }
@@ -384,11 +403,12 @@
 #pragma mark 注册
 -(UIButton *)registerButton{
     if (!_registerButton) {
-        _registerButton = [[UIButton alloc] initWithFrame:CGRectMake((kScreenWidth-280)/2.0, self.agreementView.bottom+13.0, 280, 55)];
-        [_registerButton setBackgroundImage:[UIImage imageNamed:@"login_bg_btn"] forState:UIControlStateNormal];
+        CGRect btnFrame = IS_IPAD?CGRectMake((kScreenWidth-515)/2.0, self.agreementView.bottom+30.0,515, 75):CGRectMake(48,  self.agreementView.bottom+13.0,kScreenWidth-96, 60);
+        _registerButton = [[UIButton alloc] initWithFrame:btnFrame];
+        [_registerButton setBackgroundImage:IS_IPAD?[UIImage imageNamed:@"login_bg_btn_ipad"]:[UIImage imageNamed:@"login_bg_btn"] forState:UIControlStateNormal];
         [_registerButton setTitle:@"注册" forState:UIControlStateNormal];
         [_registerButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        _registerButton.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:16];
+        _registerButton.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:IS_IPAD?25:16];
         [_registerButton addTarget:self action:@selector(registerAction) forControlEvents:UIControlEventTouchUpInside];
     }
     return _registerButton;

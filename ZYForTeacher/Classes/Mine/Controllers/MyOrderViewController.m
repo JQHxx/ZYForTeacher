@@ -59,10 +59,19 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
+    
+    [MobClick beginLogPageView:@"我的订单"];
+    
     if ([ZYHelper sharedZYHelper].isUpdateOrderList) {
         [self loadOrderInfo];
         [ZYHelper sharedZYHelper].isUpdateOrderList = NO;
     }
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    
+    [MobClick endLogPageView:@"我的订单"];
 }
 
 #pragma mark -- UITableViewDataSource and UITableViewDelegate
@@ -97,9 +106,9 @@
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
     OrderModel *model = self.orderListData[indexPath.section];
     if ([model.status integerValue]==0) {
-        return 155;
+        return IS_IPAD?245:155;
     }else{
-       return 112;
+        return IS_IPAD?172:112;
     }
 }
 
@@ -128,6 +137,7 @@
     }else{
         orderSelectIndex = index;
     }
+    page = 1;
     [self loadNewOrderData];
 }
 
@@ -153,6 +163,7 @@
             model.job_pic = myOrder.job_pic;
             model.label = myOrder.label;
             model.orderId = myOrder.oid;
+            model.temp_time = myOrder.temp_time;
             
             dispatch_async(dispatch_get_main_queue(), ^{
                 ConnecttingViewController *connenttingVC = [[ConnecttingViewController alloc] initWithCallee:model.third_id];
@@ -162,8 +173,6 @@
             });
             
         }];
-         
-        
     }
 }
 
@@ -200,7 +209,7 @@
         default:
             break;
     }
-    
+    page = 1;
     self.orderMenuView.currentIndex = orderSelectIndex;
     [self loadNewOrderData];
 }
@@ -250,7 +259,8 @@
 #pragma mark 标题栏
 -(SlideMenuView *)titleView{
     if (!_titleView) {
-        _titleView = [[SlideMenuView alloc] initWithFrame:CGRectMake((kScreenWidth -200)/2, KStatusHeight, 200, kNavHeight-KStatusHeight) btnTitleFont:[UIFont pingFangSCWithWeight:FontWeightStyleMedium size:16] color:[UIColor colorWithHexString:@"#4A4A4A"] selColor:[UIColor colorWithHexString:@"#FF6161"] showLine:NO];
+        CGFloat titleW = IS_IPAD?280:200;
+        _titleView = [[SlideMenuView alloc] initWithFrame: CGRectMake((kScreenWidth -titleW)/2, KStatusHeight, titleW, kNavHeight-KStatusHeight) btnTitleFont:[UIFont pingFangSCWithWeight:FontWeightStyleMedium size:IS_IPAD?24:16] color:[UIColor colorWithHexString:@"#4A4A4A"] selColor:[UIColor colorWithHexString:@"#FF6161"] showLine:NO];
         _titleView.isShowUnderLine = YES;
         _titleView.myTitleArray = @[@"作业检查",@"作业辅导"];
         _titleView.currentIndex = typeSelectIndex;
@@ -263,7 +273,7 @@
 #pragma mark 订单状态栏
 -(SlideMenuView *)orderMenuView{
     if (!_orderMenuView) {
-        _orderMenuView = [[SlideMenuView alloc] initWithFrame:CGRectMake(0, kNavHeight+5, kScreenWidth, 40) btnTitleFont:[UIFont pingFangSCWithWeight:FontWeightStyleMedium size:13] color:[UIColor colorWithHexString:@"#9B9B9B "] selColor:nil showLine:NO];
+        _orderMenuView = [[SlideMenuView alloc] initWithFrame:IS_IPAD?CGRectMake(0, kNavHeight+5, kScreenWidth, 61):CGRectMake(0, kNavHeight+5, kScreenWidth, 40) btnTitleFont:[UIFont pingFangSCWithWeight:FontWeightStyleMedium size:IS_IPAD?20:13] color:[UIColor colorWithHexString:@"#9B9B9B "] selColor:nil showLine:NO];
         _orderMenuView.myTitleArray = stateArray;
         _orderMenuView.currentIndex = orderSelectIndex;
         _orderMenuView.delegate = self;
@@ -275,7 +285,7 @@
 #pragma mark 订单列表
 -(UITableView *)orderTableView{
     if (!_orderTableView) {
-        _orderTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, kNavHeight+45, kScreenWidth, kScreenHeight-kNavHeight-45) style:UITableViewStyleGrouped];
+        _orderTableView = [[UITableView alloc] initWithFrame:CGRectMake(0,self.orderMenuView.bottom+5, kScreenWidth, kScreenHeight-self.orderMenuView.bottom-10) style:UITableViewStyleGrouped];
         _orderTableView.delegate = self;
         _orderTableView.dataSource = self;
         _orderTableView.showsVerticalScrollIndicator = NO;

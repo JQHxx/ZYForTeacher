@@ -26,6 +26,18 @@
     [self.mySearchBar becomeFirstResponder];
 }
 
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    
+    [MobClick beginLogPageView:@"搜索学校"];
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    
+    [MobClick endLogPageView:@"搜索学校"];
+}
+
 #pragma mark -- Custom Delegate
 #pragma mark SearchResultViewControllerDelegate
 -(void)searchResultViewControllerDidSelelctSchoolText:(NSString *)schoolText{

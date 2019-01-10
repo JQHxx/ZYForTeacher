@@ -31,6 +31,18 @@
     [self initIdentitySettingView];
 }
 
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    
+    [MobClick beginLogPageView:@"身份设定"];
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    
+    [MobClick endLogPageView:@"身份设定"];
+}
+
 #pragma mark -- Event response
 -(void)chooseIdentityAction:(UIButton *)sender{
     selectedButton.selected=NO;
@@ -60,22 +72,23 @@
     [self.view addSubview:self.titleLabel];
     
     NSArray *titles = @[@"我是老师",@"我是大学生"];
-    NSArray *images = @[@"identity_teacher",@"identity_undergraduate"];
+    NSArray *images = IS_IPAD?@[@"identity_teacher_ipad",@"identity_undergraduate_ipad"]:@[@"identity_teacher",@"identity_undergraduate"];
 
-    CGFloat btnCapWidth =24.0;
-    CGFloat imgCapWidth = (kScreenWidth-240-btnCapWidth)/2.0;
+    CGFloat btnCapWidth = IS_IPAD?132:24.0;
+    CGFloat btnW = IS_IPAD?184:120;
+    CGFloat imgCapWidth = (kScreenWidth-btnW*2-btnCapWidth)/2.0;
     for (NSInteger i=0; i<2; i++) {
-        UIImageView *imgView = [[UIImageView alloc] initWithFrame:CGRectMake(imgCapWidth+(120+btnCapWidth)*i,self.titleLabel.bottom+53, 120, 136)];
+        UIImageView *imgView = [[UIImageView alloc] initWithFrame:IS_IPAD?CGRectMake(imgCapWidth+(184+132)*i, self.titleLabel.bottom+71, 184, 205):CGRectMake(imgCapWidth+(btnW+btnCapWidth)*i,self.titleLabel.bottom+53, btnW, 136)];
         imgView.image = [UIImage imageNamed:images[i]];
         [self.view addSubview:imgView];
         
-        UIButton *btn = [[UIButton alloc] initWithFrame:CGRectMake(imgCapWidth+10+(110+btnCapWidth)*i, imgView.bottom+15, 110, 30)];
+        UIButton *btn = [[UIButton alloc] initWithFrame:IS_IPAD?CGRectMake(imgCapWidth+20+(160+btnCapWidth)*i,imgView.bottom+21,160,36):CGRectMake(imgCapWidth+10+(110+btnCapWidth)*i, imgView.bottom+15, 110, 30)];
         [btn setTitle:titles[i] forState:UIControlStateNormal];
         [btn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
         [btn setTitleColor:[UIColor redColor] forState:UIControlStateSelected];
-        [btn setImage:[UIImage imageNamed:@"identity_choose_gray"] forState:UIControlStateNormal];
-        [btn setImage:[UIImage imageNamed:@"identity_choose"] forState:UIControlStateSelected];
-        btn.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+        [btn setImage:[UIImage imageNamed:IS_IPAD?@"identity_choose_gray_ipad":@"identity_choose_gray"] forState:UIControlStateNormal];
+        [btn setImage:[UIImage imageNamed:IS_IPAD?@"identity_choose_ipad":@"identity_choose"] forState:UIControlStateSelected];
+        btn.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?25:16];
         btn.titleEdgeInsets = UIEdgeInsetsMake(0, 10, 0, 0);
         btn.tag = i;
         [btn addTarget:self action:@selector(chooseIdentityAction:) forControlEvents:UIControlEventTouchUpInside];
@@ -93,8 +106,8 @@
 #pragma mark 标题
 -(UILabel *)titleLabel{
     if (!_titleLabel) {
-        _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(44, kNavHeight+15, 120, 28)];
-        _titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:20];
+        _titleLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(78, kNavHeight+24, 200, 42):CGRectMake(44, kNavHeight+15, 120, 28)];
+        _titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:IS_IPAD?30:20];
         _titleLabel.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
         _titleLabel.text = @"身份设定";
     }
@@ -104,7 +117,8 @@
 #pragma mark 确定
 -(LoginButton *)completeButton{
     if (!_completeButton) {
-        _completeButton = [[LoginButton alloc] initWithFrame:CGRectMake(48.0,self.titleLabel.bottom+273.0, kScreenWidth-95.0, (kScreenWidth-95.0)*(128.0/588.0)) title:@"确定"];
+        CGRect btnFrame = IS_IPAD?CGRectMake((kScreenWidth-515)/2.0, self.titleLabel.bottom+435.0,515, 75):CGRectMake(48,self.titleLabel.bottom+273.0,kScreenWidth-96, 60);
+        _completeButton = [[LoginButton alloc] initWithFrame:btnFrame title:@"确定"];
         [_completeButton addTarget:self action:@selector(confirmIdentitySettingAction) forControlEvents:UIControlEventTouchUpInside];
     }
     return _completeButton;

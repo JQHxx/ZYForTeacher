@@ -19,14 +19,14 @@
 -(instancetype)initWithFrame:(CGRect)frame{
     self = [super initWithFrame:frame];
     if (self) {
-        UIView *bgView = [[UIView alloc] initWithFrame:CGRectMake(10, 0,80+kBtnWidth*3,kBtnWidth+14)];
+        UIView *bgView = [[UIView alloc] initWithFrame:IS_IPAD?CGRectMake(0, 0, 120+76*3,95):CGRectMake(10, 0,80+kBtnWidth*3,kBtnWidth+14)];
         bgView.backgroundColor = [UIColor whiteColor];
         bgView.boderRadius =4;
         [self addSubview:bgView];
         //画笔颜色
-        NSArray *iconsArr = @[@"red",@"black",@"blue"];
+        NSArray *iconsArr = IS_IPAD?@[@"red_ipad",@"black_ipad",@"blue_ipad"]:@[@"red",@"black",@"blue"];
         for (NSInteger i=0; i<iconsArr.count; i++) {
-            UIButton *btn = [[UIButton alloc] initWithFrame:CGRectMake(20+i*(20+kBtnWidth),7, kBtnWidth, kBtnWidth)];
+            UIButton *btn = [[UIButton alloc] initWithFrame:IS_IPAD?CGRectMake(20+i*(76+20), 10, 76, 76):CGRectMake(20+i*(20+kBtnWidth),7, kBtnWidth, kBtnWidth)];
             [btn setImage:[UIImage imageNamed:iconsArr[i]] forState:UIControlStateNormal];
             [btn addTarget:self action:@selector(setPenColorAction:) forControlEvents:UIControlEventTouchUpInside];
             btn.tag = i;

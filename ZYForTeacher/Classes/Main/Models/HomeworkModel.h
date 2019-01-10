@@ -23,6 +23,7 @@
 @property (nonatomic , copy ) NSString    *username;        //学生姓名
 @property (nonatomic , copy ) NSString    *trait;           //学生头像
 @property (nonatomic ,strong) NSNumber    *job_price;       //作业价格
+@property (nonatomic ,strong) NSNumber    *temp_time;          //临时辅导时间
 
 @property (nonatomic , copy )  NSString   *third_id;         //通信ID
 @property (nonatomic , copy )  NSString   *orderId;         //订单id

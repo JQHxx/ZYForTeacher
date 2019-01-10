@@ -12,6 +12,8 @@
 
 @interface WhiteboardLines : NSObject<WhiteboardDrawViewDataSource>
 
+@property (nonatomic,assign)BOOL hasLines; //是否为空
+
 //添加线条
 - (void)addPoint:(WhiteboardPoint *)point uid:(NSString *)uid;
 //撤销

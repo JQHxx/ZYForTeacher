@@ -7,15 +7,14 @@
 //
 
 #import "FeedbackViewController.h"
-#import "BackScrollView.h"
 #import "UITextView+ZWPlaceHolder.h"
 #import "UITextView+ZWLimitCounter.h"
+#import "LoginButton.h"
 
 @interface FeedbackViewController ()<UITextViewDelegate>
 
-@property (nonatomic ,strong) BackScrollView *rootScrollView;
 @property (nonatomic, strong) UITextView *myTextView;
-@property (nonatomic, strong) UIButton   *submitButton;
+@property (nonatomic, strong) LoginButton   *submitButton;
 
 @end
 
@@ -25,9 +24,8 @@
     [super viewDidLoad];
     self.baseTitle = @"意见反馈";
     
-    [self.view addSubview:self.rootScrollView];
-    [self.rootScrollView addSubview:self.myTextView];
-    [self.rootScrollView addSubview:self.submitButton];
+    [self.view addSubview:self.myTextView];
+    [self.view addSubview:self.submitButton];
 }
 
 
@@ -60,24 +58,14 @@
 }
 
 #pragma mark -- Getters
-#pragma mark
--(BackScrollView *)rootScrollView{
-    if (!_rootScrollView) {
-        _rootScrollView = [[BackScrollView alloc] initWithFrame:CGRectMake(0, kNavHeight, kScreenWidth, kScreenHeight-kNavHeight)];
-    }
-    return _rootScrollView;
-}
-
-
 #pragma mark 文字输入
 -(UITextView *)myTextView{
     if (!_myTextView) {
-        _myTextView = [[UITextView alloc] initWithFrame:CGRectMake(10, 10, kScreenWidth-20, 200)];
+        _myTextView = [[UITextView alloc] initWithFrame:IS_IPAD?CGRectMake(20,kNavHeight+20, kScreenWidth-40, 390):CGRectMake(10,kNavHeight+10, kScreenWidth-20, 200)];
         _myTextView.backgroundColor = [UIColor colorWithHexString:@"#F6F6F6"];
         _myTextView.delegate = self;
-        _myTextView.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+        _myTextView.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?25:16];
         _myTextView.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
-        _myTextView.contentSize =CGSizeMake(kScreenWidth-20, 250);
         [_myTextView drawBorderRadisuWithType:BoderRadiusTypeAll boderRadius:4.0];
         _myTextView.zw_placeHolder = @"请简要描述您的问题和意见";
         _myTextView.zw_limitCount = 200;
@@ -86,14 +74,12 @@
 }
 
 #pragma mark 提交
--(UIButton *)submitButton{
+-(LoginButton *)submitButton{
     if (!_submitButton) {
-        _submitButton = [[UIButton alloc] initWithFrame:CGRectMake((kScreenWidth-280)/2.0, self.myTextView.bottom+30, 280,60)];
-        [_submitButton setTitle:@"提交" forState:UIControlStateNormal];
-        [_submitButton setBackgroundImage:[UIImage imageNamed:@"login_bg_btn"] forState:UIControlStateNormal];
-        [_submitButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        _submitButton.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:16];
+        CGRect btnFrame = IS_IPAD?CGRectMake((kScreenWidth-515)/2.0,self.myTextView.bottom+30,515, 75):CGRectMake(48,self.myTextView.bottom+30,kScreenWidth-96, 60);
+        _submitButton = [[LoginButton alloc] initWithFrame:btnFrame title:@"提交"];
         [_submitButton addTarget:self action:@selector(submitFeedbackAction:) forControlEvents:UIControlEventTouchUpInside];
+        _submitButton.timeInterval = 2.0;
     }
     return _submitButton;
 }

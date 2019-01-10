@@ -45,7 +45,7 @@
     GradeTableViewCell *cell = [[GradeTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
     cell.accessoryType = UITableViewCellAccessoryNone;
     cell.textLabel.text = self.gradesArray[indexPath.row];
-    cell.textLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+    cell.textLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?24:16];
     for (NSIndexPath *index in self.selectedIndexPaths) {
         if (index == indexPath) { //改行在选择的数组里面有记录
             cell.isSelected = YES;
@@ -63,33 +63,32 @@
         }
     }
     
+    cell.selectButton.tag = indexPath.row;
+    [cell.selectButton addTarget:self action:@selector(selectGrade:) forControlEvents:UIControlEventTouchUpInside];
+    
     return cell;
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     [tableView deselectRowAtIndexPath:indexPath animated:NO];
     
-    //获取到点击的cell
-    GradeTableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
-    if (cell.isSelected) { //如果为选中状态
-        cell.isSelected = NO;
-        [self.selectedIndexPaths removeObject:indexPath];
-    }else {
-        if (self.selectedIndexPaths.count>1) {
-            [self.view makeToast:@"您最多只能选择两个年级" duration:1.0 position:CSToastPositionCenter];
-            return;
-        }
-        cell.isSelected = YES;
-        [self.selectedIndexPaths addObject:indexPath];
-    }
+    [self setGradesForIndexPath:indexPath];
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section{
-    return 35;
+    return IS_IPAD?50:35;
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    return 50;
+    return IS_IPAD?76:50;
+}
+
+- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath{
+    if (IS_IPAD) {
+        [cell setSeparatorInset:UIEdgeInsetsMake(0,50, 0,50)];
+    }else{
+        [cell setSeparatorInset:UIEdgeInsetsMake(0,21, 0, 0)];
+    }
 }
 
 #pragma mark -- Event response
@@ -110,14 +109,38 @@
     }
 }
 
+#pragma mark 选择年级
+-(void)selectGrade:(UIButton *)sender{
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:sender.tag inSection:0];
+    [self setGradesForIndexPath:indexPath];
+}
+
+#pragma mark - Private Methods
+#pragma mark 设置年级
+-(void)setGradesForIndexPath:(NSIndexPath *)indexPath{
+    GradeTableViewCell *cell = [self.gradeTableView cellForRowAtIndexPath:indexPath];
+    if (cell.isSelected) { //如果为选中状态
+        cell.isSelected = NO;
+        [self.selectedIndexPaths removeObject:indexPath];
+    }else {
+        if (self.selectedIndexPaths.count>1) {
+            [self.view makeToast:@"您最多只能选择两个年级" duration:1.0 position:CSToastPositionCenter];
+            return;
+        }
+        cell.isSelected = YES;
+        [self.selectedIndexPaths addObject:indexPath];
+    }
+}
+
 #pragma mark -- Getters
 -(UITableView *)gradeTableView{
     if (!_gradeTableView) {
-        _gradeTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, kNavHeight+10, kScreenWidth, kScreenHeight-kNavHeight-10) style:UITableViewStyleGrouped];
+        _gradeTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, kNavHeight, kScreenWidth, kScreenHeight-kNavHeight) style:UITableViewStylePlain];
         _gradeTableView.delegate = self;
         _gradeTableView.dataSource = self;
-        _gradeTableView.backgroundColor = [UIColor whiteColor];
+        _gradeTableView.backgroundColor = [UIColor bgColor_Gray];
         _gradeTableView.allowsSelection = YES; //允许多选
+        _gradeTableView.tableFooterView = [[UIView alloc] init];
     }
     return _gradeTableView;
 }

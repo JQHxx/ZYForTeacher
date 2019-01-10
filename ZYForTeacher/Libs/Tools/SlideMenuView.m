@@ -40,7 +40,7 @@
         [self addSubview:self.myScrollView];
         
         self.items = [[NSMutableArray alloc] init];
-        self.titleFont = titleFont ? titleFont : [UIFont pingFangSCWithWeight:FontWeightStyleSemibold size:18];
+        self.titleFont = titleFont ? titleFont : [UIFont pingFangSCWithWeight:FontWeightStyleSemibold size:IS_IPAD?25:18];
         self.titleColor = color ? color : [UIColor blackColor];
         self.titleSelectColor = selcolor ? selcolor : [UIColor redColor];
         
@@ -115,8 +115,9 @@
     UIButton *btn = _items[0];
     
     if (self.isShowUnderLine) {
-        _line = [[UIView alloc] initWithFrame:CGRectMake(10.0f, self.height - 3.0f, btn.width - 20.0f, 3.0f)];
+        _line = [[UIView alloc] initWithFrame:CGRectMake(10.0f, self.height - 4.0f, btn.width - 20.0f, 4.0f)];
         _line.backgroundColor = self.titleSelectColor;
+        _line.boderRadius = 2.0f;
         [self.myScrollView addSubview:_line];
     }
 }

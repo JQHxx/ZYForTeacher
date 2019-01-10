@@ -32,6 +32,11 @@
     return _allLines;
 }
 
+#pragma mark 是否为空
+-(BOOL)hasLines{
+    return self.allLines.count>0;
+}
+
 #pragma mark 添加线条
 - (void)addPoint:(WhiteboardPoint *)point uid:(NSString *)uid{
     if (!point || !uid) {

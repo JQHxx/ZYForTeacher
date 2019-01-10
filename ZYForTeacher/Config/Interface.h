@@ -8,7 +8,7 @@
 
 #ifndef Interface_h
 #define Interface_h
-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
 
 #endif /* Interface_h */
 
@@ -32,6 +32,7 @@
 
 //用户协议
 #define kUserAgreementURL   @"http://zy.zuoye101.com/agreement.html"
+#define kCommonProblemURL   @"https://www.zuoye101.com/h5/questions.html"
 
 #define kUploadDeviceInfoAPI   @"/teacher/device"            //上传设备信息
 #define kGetGradeAPI           @"/student/job/grade"         //获取年级
@@ -48,9 +49,11 @@
 #define kJobAcceptAPI         @"/teacher/work/accept"       //作业辅导接单
 #define kJobTutoringAPI       @"/teacher/work/guide"        //去辅导
 #define kFinishCheckAPI       @"/teacher/work/checked"      //结束检查
+#define kCheckOverAPI         @"/teacher/work/checkover"    //作业检查结束（自动扣费）
 #define kFinishTutoringAPI    @"/teacher/work/guided"       //结束辅导
 #define kCancelReasonAPI      @"/teacher/reason"            //获取取消原因
 #define kJobCancelAPI         @"/teacher/work/cancel"       //取消辅导
+#define kConnectAPI           @"/teacher/online/connect"       //老师主动连线
 
 
 /**老师管理***/
@@ -91,6 +94,7 @@
 #define kAddBankCardAPI         @"/teacher/wallet/bankcard"        //绑定银行卡
 #define kMyBankCardAPI          @"/teacher/wallet/myback"          //我的银行卡
 #define kSearchBankAPI          @"/teacher/bank/search"            //根据卡号查找银行
+#define kWalletExtractPageAPI   @"/teacher/wallet/extract"         //提现页面
 
 
 

@@ -8,17 +8,37 @@
 
 #import "LabelsView.h"
 
-#define kItemH    30
-#define kMargin      20  //按钮之间的间距
-#define kGapping     20  //距离边缘的距离
 
 @interface LabelsView(){
     UIButton  *selectItem;
+    CGFloat   itemHeight;
+    CGFloat   itemSize;
+    CGFloat   itemMargin;
+    CGFloat   itemCapping;
 }
 
 @end
 
 @implementation LabelsView
+
+-(instancetype)initWithFrame:(CGRect)frame{
+    self = [super initWithFrame:frame];
+    if (self) {
+        if (IS_IPAD) {
+            itemHeight = 43;
+            itemSize = 25;
+            itemMargin = 45.0;
+            itemCapping = 34.0;
+        }else{
+            itemHeight = 30;
+            itemSize = 16;
+            itemMargin = 20.0;
+            itemCapping = 20.0;
+        }
+        
+    }
+    return self;
+}
 
 -(void)layoutSubviews{
     [super layoutSubviews];
@@ -36,25 +56,25 @@
         //设置文字的宽度
         NSString *titleStr = self.labelsArray[i];
         
-        item.width = [titleStr boundingRectWithSize:CGSizeMake(CGFLOAT_MAX, kItemH) withTextFont:[UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16]].width + 15;
-        item.height = kItemH;
+        item.width = [titleStr boundingRectWithSize:CGSizeMake(CGFLOAT_MAX, itemHeight) withTextFont:[UIFont pingFangSCWithWeight:FontWeightStyleRegular size:itemSize]].width + itemCapping*2;
+        item.height = itemHeight;
         if (i == 0) {  //第一个的时候放心大胆的布局，并记录下上一个button的位置
-            if(item.width >kScreenWidth - 2*kGapping){  //单行文字超过一行处理
-                item.width = kScreenWidth -2*kGapping;
+            if(item.width >kScreenWidth - 2*itemCapping){  //单行文字超过一行处理
+                item.width = kScreenWidth -2*itemCapping;
             }
-            item.x = kGapping;
+            item.x = itemCapping;
             item.y = 0;
             lastBtn =item;
         }else{  //依据上一个button来布局
-            if (lastBtn.right+item.width+kMargin>kScreenWidth) { //不足以再摆一行了
-                item.y = lastBtn.bottom+kMargin;
-                item.x = kGapping;
-                if(item.width >kScreenWidth - 2*kGapping){  //单行文字超过一行处理
-                    item.width = kScreenWidth -2*kGapping;
+            if (lastBtn.right+item.width+itemMargin>kScreenWidth) { //不足以再摆一行了
+                item.y = lastBtn.bottom+itemMargin;
+                item.x = itemCapping;
+                if(item.width >kScreenWidth - 2*itemCapping){  //单行文字超过一行处理
+                    item.width = kScreenWidth -2*itemCapping;
                 }
             }else{  //还能在摆同一行
                 item.y = lastBtn.y;
-                item.x=lastBtn.right+kMargin;
+                item.x=lastBtn.right+itemMargin;
             }
             //  保存上一次的Button
             lastBtn = item;
@@ -63,7 +83,7 @@
     
     //动态计算高度
     if (self.viewHeightRecalc) {
-        self.viewHeightRecalc(lastBtn.bottom+kMargin);
+        self.viewHeightRecalc(lastBtn.bottom+itemMargin);
     }
 }
 
@@ -95,7 +115,7 @@
         UIButton *item = [[UIButton alloc] init];
         [item setTitleColor:[UIColor colorWithHexString:@"#4A4A4A"] forState:UIControlStateNormal];
         [item setTitleColor:[UIColor colorWithHexString:@"#FF6161"] forState:UIControlStateSelected];
-        item.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+        item.titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:itemSize];
         item.layer.cornerRadius = 4.0;
         item.clipsToBounds = YES;
         item.layer.borderWidth = 0.5;

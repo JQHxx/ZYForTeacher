@@ -25,14 +25,14 @@
     self = [super initWithFrame:frame];
     if (self) {
         self.backgroundColor = [UIColor colorWithHexString:@"#F7F7F7"];
-        iconsArr = @[@"red",@"black",@"blue"];
+        iconsArr = IS_IPAD?@[@"red_ipad",@"black_ipad",@"blue_ipad"]:@[@"red",@"black",@"blue"];
         
-        NSArray *images = @[@"red",@"coach_whiteboard",@"coach_delete",@"coach_revoke"];
+        NSArray *images = IS_IPAD?@[@"red_ipad",@"coach_whiteboard_ipad",@"coach_delete_ipad",@"coach_revoke_ipad"]:@[@"red",@"coach_whiteboard",@"coach_delete",@"coach_revoke"];
         NSArray *titles = @[@"画笔",@"白板",@"清除",@"撤销"];
-        CGFloat kBtnCap = (kViewWidth-titles.count*40)/4.0;
+        CGFloat kBtnCap = IS_IPAD?(kScreenWidth-280-titles.count*85)/4.0:(kViewWidth-titles.count*40)/4.0;
         for (NSInteger i=0; i<titles.count; i++) {
-            UIImage *image = [UIImage imageNamed:images[i]];
-            UIButton *btn = [UIButton createCustomButtonWithFrame:CGRectMake(kBtnCap+i*(40+kBtnCap), 12, 40, 40) Image:image title:titles[i]];
+            UIImage *image = IS_IPAD?[UIImage imageNamed:images[i]]:[UIImage drawImageWithName:images[i] size:CGSizeMake(20, 20)];
+            UIButton *btn = [UIButton createCustomButtonWithFrame:IS_IPAD?CGRectMake(kBtnCap+i*(65+kBtnCap), 20, 65, 65):CGRectMake(kBtnCap+i*(40+kBtnCap), 12, 40, 40) Image:image title:titles[i] btnFont:IS_IPAD?22:15];
             btn.tag=i;
             if (i==0) {
                 colorBtn = btn;

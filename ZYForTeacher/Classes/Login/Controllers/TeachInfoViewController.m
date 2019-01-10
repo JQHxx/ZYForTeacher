@@ -43,6 +43,18 @@
     [self.view addSubview:self.completeButton];
 }
 
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    
+    [MobClick beginLogPageView:@"教学信息"];
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    
+    [MobClick endLogPageView:@"教学信息"];
+}
+
 #pragma mark -- UITableViewDataSource and UITableViewDelegate
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
     return teachTitlesArray.count;
@@ -52,9 +64,9 @@
     UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:nil];
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
     cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-    cell.textLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+    cell.textLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?24:16];
     cell.textLabel.text = teachTitlesArray[indexPath.row];
-    cell.detailTextLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+    cell.detailTextLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?24:16];
     if (indexPath.row == 0) {
         cell.detailTextLabel.text = [self.user.edu_exp integerValue]>0?[NSString stringWithFormat:@"%@年",self.user.edu_exp]:@"";
     }else if (indexPath.row == 1){
@@ -92,7 +104,15 @@
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    return 50;
+    return IS_IPAD?76:50;
+}
+
+- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath{
+    if (IS_IPAD) {
+        [cell setSeparatorInset:UIEdgeInsetsMake(0,40, 0,0)];
+    }else{
+        [cell setSeparatorInset:UIEdgeInsetsMake(0,21, 0, 0)];
+    }
 }
 
 #pragma mark -- Private Methods
@@ -220,8 +240,8 @@
 #pragma mark 标题
 -(UILabel *)titleLabel{
     if (!_titleLabel) {
-        _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(40, kNavHeight+15, 120, 28)];
-        _titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:20];
+        _titleLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(78, kNavHeight+25, 180, 43):CGRectMake(20, kNavHeight+15, 120, 28)];
+        _titleLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:IS_IPAD?30:20];
         _titleLabel.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
         _titleLabel.text = @"教学信息";
     }
@@ -231,7 +251,7 @@
 #pragma mark 教学信息
 -(UITableView *)teachInfoTableView{
     if (!_teachInfoTableView) {
-        _teachInfoTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, self.titleLabel.bottom+20, kScreenWidth, 200) style:UITableViewStylePlain];
+        _teachInfoTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, self.titleLabel.bottom+20, kScreenWidth,kScreenHeight-self.titleLabel.bottom-20) style:UITableViewStylePlain];
         _teachInfoTableView.dataSource = self;
         _teachInfoTableView.delegate = self;
         _teachInfoTableView.tableFooterView = [[UIView alloc] init];
@@ -242,7 +262,8 @@
 #pragma mark 确定
 -(LoginButton *)completeButton{
     if (!_completeButton) {
-        _completeButton = [[LoginButton alloc] initWithFrame:CGRectMake(48.0,self.teachInfoTableView.bottom+50, kScreenWidth-95.0, (kScreenWidth-95.0)*(128.0/588.0)) title:@"确定"];
+        CGRect btnFrame = IS_IPAD?CGRectMake((kScreenWidth-515)/2.0,self.titleLabel.bottom+50*5+120,515, 75):CGRectMake(48,self.titleLabel.bottom+50*5+60,kScreenWidth-96, 60);
+        _completeButton = [[LoginButton alloc] initWithFrame:btnFrame title:@"确定"];
         [_completeButton addTarget:self action:@selector(confirmSetTeachInfoAction) forControlEvents:UIControlEventTouchUpInside];
     }
     return _completeButton;

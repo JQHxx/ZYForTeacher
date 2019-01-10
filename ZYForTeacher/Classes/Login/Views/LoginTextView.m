@@ -19,17 +19,18 @@
 -(instancetype)initWithFrame:(CGRect)frame placeholder:(NSString *)placeholder icon:(NSString *)icon isNumber:(BOOL)isNumber{
     self = [super initWithFrame:frame];
     if (self) {
-        self.imgView = [[UIImageView alloc] initWithFrame:CGRectMake(20,14.0, 20, 24)];
+        self.imgView = [[UIImageView alloc] initWithFrame:IS_IPAD?CGRectMake(30, 25, 28, 35):CGRectMake(20,14.0, 20, 24)];
         self.imgView.image = [UIImage imageNamed:icon];
         [self addSubview:self.imgView];
         
-        self.myText = [[UITextField alloc] initWithFrame:CGRectMake(self.imgView.right+10, 15, frame.size.width -self.imgView.right-40, 22)];
-        self.myText.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:16];
+        self.myText = [[UITextField alloc] initWithFrame:IS_IPAD?CGRectMake(self.imgView.right+25, 26,frame.size.width-self.imgView.right-80, 33):CGRectMake(self.imgView.right+10, 15, frame.size.width -self.imgView.right-40, 22)];
+        CGFloat fontSize= kScreenWidth<375.0?14:16;
+        self.myText.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?24:fontSize];
         self.myText.placeholder = placeholder;
         self.myText.textColor = [UIColor colorWithHexString:@"#4A4A4A"];
         [self addSubview:self.myText];
         
-        UILabel *lineLbl = [[UILabel alloc] initWithFrame:CGRectMake(0,self.myText.bottom+15.0,frame.size.width, 0.5)];
+        UILabel *lineLbl = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(0, self.myText.bottom+25.5, frame.size.width, 0.5):CGRectMake(0,self.myText.bottom+15.0,frame.size.width, 0.5)];
         lineLbl.backgroundColor = [UIColor colorWithHexString:@"#D8D8D8"];
         [self addSubview:lineLbl];
         
