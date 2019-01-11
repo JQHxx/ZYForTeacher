@@ -550,8 +550,6 @@
 		A298BE7A21A548B300C4FBB4 /* NMC.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A298BD4E21A548B300C4FBB4 /* NMC.framework */; };
 		A298BE7B21A548B300C4FBB4 /* NMCVideoFilter.bundle in Resources */ = {isa = PBXBuildFile; fileRef = A298BD5021A548B300C4FBB4 /* NMCVideoFilter.bundle */; };
 		A298BEF821A548B300C4FBB4 /* NIMSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A298BE7821A548B300C4FBB4 /* NIMSDK.framework */; };
-		A298BEFB21A548C200C4FBB4 /* NIMKitResource.bundle in Resources */ = {isa = PBXBuildFile; fileRef = A298BEF921A548C100C4FBB4 /* NIMKitResource.bundle */; };
-		A298BEFC21A548C200C4FBB4 /* NIMKitEmoticon.bundle in Resources */ = {isa = PBXBuildFile; fileRef = A298BEFA21A548C200C4FBB4 /* NIMKitEmoticon.bundle */; };
 		A298BEFD21A548D500C4FBB4 /* NIMAVChat.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A298BD4D21A548B300C4FBB4 /* NIMAVChat.framework */; };
 		A298BEFE21A548D500C4FBB4 /* NIMAVChat.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A298BD4D21A548B300C4FBB4 /* NIMAVChat.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A298BF0021A548D500C4FBB4 /* NMC.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A298BD4E21A548B300C4FBB4 /* NMC.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -1445,8 +1443,6 @@
 		A298BD4E21A548B300C4FBB4 /* NMC.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = NMC.framework; sourceTree = "<group>"; };
 		A298BD5021A548B300C4FBB4 /* NMCVideoFilter.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = NMCVideoFilter.bundle; sourceTree = "<group>"; };
 		A298BE7821A548B300C4FBB4 /* NIMSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = NIMSDK.framework; sourceTree = "<group>"; };
-		A298BEF921A548C100C4FBB4 /* NIMKitResource.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = NIMKitResource.bundle; sourceTree = "<group>"; };
-		A298BEFA21A548C200C4FBB4 /* NIMKitEmoticon.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = NIMKitEmoticon.bundle; sourceTree = "<group>"; };
 		A29B03942196808900B5DE4D /* UIButton+Touch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIButton+Touch.h"; sourceTree = "<group>"; };
 		A29B03952196808900B5DE4D /* UIButton+Touch.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIButton+Touch.m"; sourceTree = "<group>"; };
 		A2A2C5E621D71F5E00554606 /* ipad_guide05@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ipad_guide05@3x.png"; sourceTree = "<group>"; };
@@ -2595,8 +2591,6 @@
 		A2E299C42133CF0F006B0908 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				A298BEFA21A548C200C4FBB4 /* NIMKitEmoticon.bundle */,
-				A298BEF921A548C100C4FBB4 /* NIMKitResource.bundle */,
 				A2B2A7F021524BC40046B592 /* Images */,
 				A2B2A7EF21524BBE0046B592 /* Data */,
 			);
@@ -3537,7 +3531,6 @@
 				A21E84D921E0560E008E47EC /* black_ipad@1x.png in Resources */,
 				A25BE8B1214F9F02009DA22B /* CZBANK@3x.png in Resources */,
 				A2A894E621E35A1B00D20BC1 /* login_agreement_ipad@2x.png in Resources */,
-				A298BEFB21A548C200C4FBB4 /* NIMKitResource.bundle in Resources */,
 				A2B2A7FD21524FCA0046B592 /* add_card_gray@2x.png in Resources */,
 				A2A55785216B699600216E15 /* pay_choose_gray@3x.png in Resources */,
 				A25A51BF215F4FB10049C55C /* task_details_loading@3x.png in Resources */,
@@ -3576,7 +3569,6 @@
 				A25BE793214F9A4E009DA22B /* return@2x.png in Resources */,
 				A25BE7F8214F9EB4009DA22B /* home_my@3x.png in Resources */,
 				A25BE7F6214F9EB4009DA22B /* news@3x.png in Resources */,
-				A298BEFC21A548C200C4FBB4 /* NIMKitEmoticon.bundle in Resources */,
 				A25BE8FA214F9F02009DA22B /* PSBC2@2x.png in Resources */,
 				A25BE798214F9A4E009DA22B /* login_agreement@2x.png in Resources */,
 				A25BE8E0214F9F02009DA22B /* bill_coach@3x.png in Resources */,
