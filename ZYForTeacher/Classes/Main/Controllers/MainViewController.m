@@ -546,7 +546,7 @@
     if (!_closeOnlineBtn) {
         CGFloat originY;
         if (IS_IPAD) {
-            originY = kScreenHeight-80;
+            originY = kScreenHeight-65;
         }else{
             originY = isXDevice?kScreenHeight-60:kScreenHeight-50;
         }

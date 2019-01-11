@@ -209,6 +209,7 @@
 #pragma mark 设置导航栏右侧按钮文字
 -(void)setRigthTitleName:(NSString *)rigthTitleName{
     _rigthTitleName=rigthTitleName;
+    self.rightBtn.enabled = !kIsEmptyString(rigthTitleName);
     [self.rightBtn setTitle:rigthTitleName forState:UIControlStateNormal];
     [self.rightBtn setTitleColor:[UIColor colorWithHexString:@"#4A4A4A"] forState:UIControlStateNormal];
     if (rigthTitleName.length>=4) {

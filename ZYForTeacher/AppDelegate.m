@@ -17,7 +17,6 @@
 #import "MyConnecttingViewController.h"
 #import "HomeworkModel.h"
 #import "YYModel.h"
-#import "UIWindow+Pazlabs.h"
 #import "MMDrawerController.h"
 #import "UIViewController+MMDrawerController.h"
 #import "MainViewController.h"

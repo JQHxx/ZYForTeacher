@@ -172,10 +172,8 @@
                     amountLabel.text = [NSString stringWithFormat:@"¥%.2f",[order.price doubleValue]]; //检查价格
                     weakSelf.amountView.frame =IS_IPAD?CGRectMake(0, weakSelf.jobPicsView.bottom+15, kScreenWidth, 122):CGRectMake(0, weakSelf.jobPicsView.bottom+10, kScreenWidth, 80);
                 }else{  //作业辅导
-                    weakSelf.homeworkView.hidden = durationTitleLabel.hidden = durationLabel.hidden = NO;
+                    weakSelf.homeworkView.hidden = weakSelf.jobPicsView.hidden = durationTitleLabel.hidden = durationLabel.hidden = NO;
 
-                    weakSelf.jobPicsView.hidden = NO;
-                    
                     CGFloat imgW = (kScreenWidth-45)/3.0; //图片宽高
                     NSInteger allNum = order.job_pic.count;
                     [weakSelf.jobPicsView updateCollectViewWithPhotosArr:[NSMutableArray arrayWithArray:order.job_pic]];
@@ -187,7 +185,7 @@
                     NSInteger jobTime = [order.job_time integerValue];
                     durationLabel.text = [NSString stringWithFormat:@"%ld分%ld秒",jobTime/60,jobTime%60];
                     amountLabel.text = [NSString stringWithFormat:@"%.2f元/分钟",[order.price doubleValue]]; //辅导价格
-                    weakSelf.amountView.frame =IS_IPAD?CGRectMake(0, weakSelf.jobPicsView.bottom+15, kScreenWidth, 122):CGRectMake(0, weakSelf.homeworkView.bottom+10, kScreenWidth, 80);
+                    weakSelf.amountView.frame =IS_IPAD?CGRectMake(0, weakSelf.homeworkView.bottom+15, kScreenWidth, 122):CGRectMake(0, weakSelf.homeworkView.bottom+10, kScreenWidth, 80);
                 }
                 
                 //支付信息

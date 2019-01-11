@@ -44,6 +44,8 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.baseTitle = @"作业详情";
+    
+    
     self.view.backgroundColor = [UIColor bgColor_Gray];
     
     [self initHomeworkDetailsView];
@@ -138,7 +140,6 @@
 }
 
 #pragma mark -- Event Response
-#pragma mark 更多
 -(void)rightNavigationItemAction{
     CancelViewController *cancelVC = [[CancelViewController alloc] init];
     cancelVC.jobid = self.homeworkInfo.job_id;
@@ -146,6 +147,7 @@
     cancelVC.myTitle = @"取消辅导";
     [self.navigationController pushViewController:cancelVC animated:YES];
 }
+    
 
 #pragma mark 处理订单
 -(void)handleHomeworkAction:(UIButton *)sender{
@@ -218,7 +220,9 @@
 #pragma mark 初始化界面
 -(void)initHomeworkDetailsView{
     if ([self.homeworkInfo.label integerValue]==2&&[self.homeworkInfo.is_receive integerValue] == 2) {
-        [self.view addSubview:self.rightItem];
+        self.rigthTitleName = @"取消";
+    }else{
+        self.rigthTitleName = @"";
     }
     
     [self.view addSubview:self.orderTimeView];
@@ -238,7 +242,9 @@
     [self.view addSubview:self.handleButton];
 }
 
+
 #pragma mark -- Getters and Setters
+/*
 #pragma mark 导航栏右按钮
 -(UIButton *)rightItem{
     if (!_rightItem) {
@@ -248,6 +254,7 @@
     }
     return _rightItem;
 }
+ */
 
 #pragma mark 辅导时间
 -(UIView *)orderTimeView{
@@ -314,7 +321,7 @@
         priceLabel.textColor = [UIColor colorWithHexString:@"#FF6161"];
         priceLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleMedium size:IS_IPAD?25:16];
         priceLabel.textAlignment = NSTextAlignmentRight;
-        priceLabel.text = [self.homeworkInfo.label integerValue]>1?[NSString stringWithFormat:@"%.2f元/分钟",[self.homeworkInfo.job_price doubleValue]]:[NSString stringWithFormat:@"%.2f元",[self.homeworkInfo.job_price doubleValue]];
+        priceLabel.text = [self.homeworkInfo.label integerValue]>1?[NSString stringWithFormat:@"%.2f元/分钟",[self.homeworkInfo.price doubleValue]]:[NSString stringWithFormat:@"%.2f元",[self.homeworkInfo.price doubleValue]];
         [_studentInfoView addSubview:priceLabel];
     }
     return _studentInfoView;

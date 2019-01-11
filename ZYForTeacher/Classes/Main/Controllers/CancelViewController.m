@@ -10,7 +10,7 @@
 #import "MyOrderViewController.h"
 #import "WhiteboardCmdHandler.h"
 #import "UIButton+Touch.h"
-
+#import <NIMAVChat/NIMAVChat.h>
 
 @interface CancelViewController ()<WhiteboardCmdHandlerDelegate>{
     NSArray   *reasonsArr;
@@ -68,6 +68,10 @@
     [TCHttpRequest postMethodWithURL:urlStr body:body success:^(id json) {
         if (weakSelf.type==CancelTypeOrderCoach) {
             [_cmdHander sendPureCmd:WhiteBoardCmdTypeCancelCoach];
+        }
+        
+        if (weakSelf.callID>0) {
+            [[NIMAVChatSDK sharedSDK].netCallManager hangup:weakSelf.callID];
         }
         
         dispatch_sync(dispatch_get_main_queue(), ^{

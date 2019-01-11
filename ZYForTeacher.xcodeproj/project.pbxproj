@@ -577,7 +577,6 @@
 		A2A2C60921D74BB000554606 /* login_password_hide_ipad@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = A2A2C60521D74BB000554606 /* login_password_hide_ipad@3x.png */; };
 		A2A2C60C21D7719800554606 /* login_bg_btn_ipad@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A2A2C60A21D7719700554606 /* login_bg_btn_ipad@2x.png */; };
 		A2A2C60D21D7719800554606 /* login_bg_btn_ipad@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = A2A2C60B21D7719800554606 /* login_bg_btn_ipad@3x.png */; };
-		A2A4C2402171D475007E527C /* UIWindow+Pazlabs.m in Sources */ = {isa = PBXBuildFile; fileRef = A2A4C23F2171D475007E527C /* UIWindow+Pazlabs.m */; };
 		A2A55785216B699600216E15 /* pay_choose_gray@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = A2A55781216B699500216E15 /* pay_choose_gray@3x.png */; };
 		A2A55786216B699600216E15 /* pay_choose@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = A2A55782216B699500216E15 /* pay_choose@3x.png */; };
 		A2A55787216B699600216E15 /* pay_choose@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A2A55783216B699500216E15 /* pay_choose@2x.png */; };
@@ -1470,8 +1469,6 @@
 		A2A2C60521D74BB000554606 /* login_password_hide_ipad@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "login_password_hide_ipad@3x.png"; sourceTree = "<group>"; };
 		A2A2C60A21D7719700554606 /* login_bg_btn_ipad@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "login_bg_btn_ipad@2x.png"; sourceTree = "<group>"; };
 		A2A2C60B21D7719800554606 /* login_bg_btn_ipad@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "login_bg_btn_ipad@3x.png"; sourceTree = "<group>"; };
-		A2A4C23E2171D475007E527C /* UIWindow+Pazlabs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIWindow+Pazlabs.h"; sourceTree = "<group>"; };
-		A2A4C23F2171D475007E527C /* UIWindow+Pazlabs.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "UIWindow+Pazlabs.m"; sourceTree = "<group>"; };
 		A2A55781216B699500216E15 /* pay_choose_gray@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "pay_choose_gray@3x.png"; sourceTree = "<group>"; };
 		A2A55782216B699500216E15 /* pay_choose@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "pay_choose@3x.png"; sourceTree = "<group>"; };
 		A2A55783216B699500216E15 /* pay_choose@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "pay_choose@2x.png"; sourceTree = "<group>"; };
@@ -2971,8 +2968,6 @@
 				A2913CCF213801FF00988D37 /* UIFont+FontName.m */,
 				A25F753D215C640C0014D93B /* NSObject+Extend.h */,
 				A25F753E215C640D0014D93B /* NSObject+Extend.m */,
-				A2A4C23E2171D475007E527C /* UIWindow+Pazlabs.h */,
-				A2A4C23F2171D475007E527C /* UIWindow+Pazlabs.m */,
 				A25BA9262175F935009C255C /* UIScrollView+UITouch.h */,
 				A25BA9252175F935009C255C /* UIScrollView+UITouch.m */,
 				A291AF002182BA5D00ED6D74 /* UILabel+Extend.h */,
@@ -3981,7 +3976,6 @@
 				A25BE7B3214F9E12009DA22B /* MessagesViewController.m in Sources */,
 				A2913CC121377A5D00988D37 /* STPopupLeftBarItem.m in Sources */,
 				A26A6B1F2140AF0400298123 /* BankModel.m in Sources */,
-				A2A4C2402171D475007E527C /* UIWindow+Pazlabs.m in Sources */,
 				A28943D521362BDF004DA04A /* BRAddressPickerView.m in Sources */,
 				A25F7595215CA6440014D93B /* UIImage+WebP.m in Sources */,
 				A24E94FB21772E8D008D3A68 /* MJRefreshAutoGifFooter.m in Sources */,

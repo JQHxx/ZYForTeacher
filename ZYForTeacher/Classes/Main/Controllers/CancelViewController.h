@@ -22,4 +22,6 @@ typedef enum : NSUInteger {
 @property (nonatomic, copy )NSString  *oid;          //订单id
 @property (nonatomic,assign)CancelType type;          //2=作业取消接单原因4=取消作业检查订单原因 6 = 取消作业辅导订单原因
 
+@property(nonatomic,assign) UInt64 callID;//通话成功ID
+
 @end

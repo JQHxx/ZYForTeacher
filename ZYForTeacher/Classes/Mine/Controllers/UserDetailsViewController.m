@@ -83,6 +83,7 @@
         
         UILabel *authenticateLabel = [[UILabel alloc] initWithFrame:IS_IPAD?CGRectMake(kScreenWidth-118, 20, 80, 36):CGRectMake(kScreenWidth-68, 14, 50, 22)];
         authenticateLabel.font = [UIFont pingFangSCWithWeight:FontWeightStyleRegular size:IS_IPAD?25:16];
+        authenticateLabel.textAlignment = NSTextAlignmentRight;
         [cell.contentView addSubview:authenticateLabel];
         if (indexPath.row==2) {
             authenticateImageView.hidden = [self.userInfo.auth_id integerValue]!=2;
@@ -92,7 +93,7 @@
             authenticateLabel.text = [self getAuthStateWithAuth:self.userInfo.auth_edu];
         }else if (indexPath.row==4){
             authenticateImageView.hidden = [self.userInfo.auth_teach integerValue]!=2;
-            authenticateLabel.text = [self getAuthStateWithAuth:self.userInfo.auth_teach];;
+            authenticateLabel.text = [self getAuthStateWithAuth:self.userInfo.auth_teach];
         }else{
             authenticateImageView.hidden = [self.userInfo.auth_skill integerValue]!=2;
             authenticateLabel.text = [self getAuthStateWithAuth:self.userInfo.auth_skill];;
@@ -103,9 +104,9 @@
             authenticateLabel.textColor = [UIColor colorWithHexString:@"#9B9B9B"];
         }
         if ([authenticateLabel.text isEqualToString:@"审核未通过"]) {
-            authenticateLabel.frame = IS_IPAD?CGRectMake(kScreenWidth-162, 20,120, 36):CGRectMake(kScreenWidth-97, 14, 82, 22);
+            authenticateLabel.frame = IS_IPAD?CGRectMake(kScreenWidth-175, 20,140, 36):CGRectMake(kScreenWidth-97, 14, 82, 22);
         }else{
-            authenticateLabel.frame =IS_IPAD?CGRectMake(kScreenWidth-118, 20, 80, 36):CGRectMake(kScreenWidth-68, 14, 50, 22);
+            authenticateLabel.frame = IS_IPAD?CGRectMake(kScreenWidth-118, 20, 80, 36):CGRectMake(kScreenWidth-68, 14, 50, 22);
         }
         
     }
